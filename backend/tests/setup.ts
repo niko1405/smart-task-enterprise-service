@@ -1,4 +1,8 @@
+import { config } from 'dotenv';
 import { prisma } from '../src/config/database';
+
+// Load test environment variables
+config({ path: '.env.test' });
 
 // Global test setup
 beforeAll(async () => {

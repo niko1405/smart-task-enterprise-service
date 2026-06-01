@@ -274,5 +274,12 @@ git log --oneline -3  # zur Kontrolle der letzten Commits
 - .dockerignore muss in beiden Projekten vorhanden sein.
 - Container-Ports müssen konsistent mit lokaler Entwicklung sein (Backend: 3000, Frontend: 5173, Mailpit: 1025/8025).
 
+## Container-Start-Prüfung
+- Vor jedem Backend-Start müssen die Container mit `docker compose ps` geprüft werden.
+- Falls Container nicht laufen (`unhealthy` oder `exited`), müssen sie mit `docker compose up -d` neu gestartet werden.
+- Datenbank-Container müssen `healthy` sein bevor Prisma-Migrationen ausgeführt werden.
+- Test-Datenbank (smarttask_test_db) muss separat existieren oder automatisch erstellt werden.
+- Container-Logs müssen auf Fehler geprüft werden: `docker compose logs <service>`.
+
 ## Development-Workflow mit Docker
 - Lokale Entwicklung: `docker-compose up` startet alle Services.

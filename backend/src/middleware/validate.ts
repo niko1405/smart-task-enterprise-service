@@ -3,7 +3,7 @@ import { ZodSchema } from 'zod';
 
 export const validate =
   (schema: ZodSchema) =>
-  (req: Request, res: Response, next: NextFunction): void => {
+  (req: Request, _res: Response, next: NextFunction): void => {
     try {
       const validated = schema.parse({
         body: req.body,
@@ -24,7 +24,7 @@ export const validate =
 
 export const validateBody =
   (schema: ZodSchema) =>
-  (req: Request, res: Response, next: NextFunction): void => {
+  (req: Request, _res: Response, next: NextFunction): void => {
     try {
       req.body = schema.parse(req.body);
       next();
@@ -35,7 +35,7 @@ export const validateBody =
 
 export const validateQuery =
   (schema: ZodSchema) =>
-  (req: Request, res: Response, next: NextFunction): void => {
+  (req: Request, _res: Response, next: NextFunction): void => {
     try {
       req.query = schema.parse(req.query);
       next();
@@ -46,7 +46,7 @@ export const validateQuery =
 
 export const validateParams =
   (schema: ZodSchema) =>
-  (req: Request, res: Response, next: NextFunction): void => {
+  (req: Request, _res: Response, next: NextFunction): void => {
     try {
       req.params = schema.parse(req.params);
       next();

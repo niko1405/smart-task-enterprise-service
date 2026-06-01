@@ -34,8 +34,14 @@ export const errorHandler = (
 
   // Handle Prisma errors
   if (err.name === 'PrismaClientKnownRequestError') {
-    statusCode = 400;
-    message = 'Database operation failed';
+    const prismaErr = err as ApiError & { code?: string };
+    if (prismaErr.code === 'P2025') {
+      statusCode = 404;
+      message = 'Record not found';
+    } else {
+      statusCode = 400;
+      message = 'Database operation failed';
+    }
   }
 
   // Log error in development

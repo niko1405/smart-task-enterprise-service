@@ -12,6 +12,7 @@ import {
   emitTaskDeleted,
 } from '../websocket/handlers';
 import { TaskStatus } from '@prisma/client';
+import { TaskFilterInput } from '../models/task.model';
 
 const router = Router();
 
@@ -56,7 +57,7 @@ router.get(
   validateQuery(taskFilterSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const result = await taskService.getTasks(req.query, req.user!.userId);
+      const result = await taskService.getTasks(req.query as unknown as TaskFilterInput, req.user!.userId);
       res.status(200).json({
         success: true,
         data: result,
@@ -92,19 +93,19 @@ router.get(
   '/:id',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const task = await taskService.getTaskById(req.params.id);
+      const task = await taskService.getTaskById(req.params['id'] as string);
       if (!task) {
         return res.status(404).json({
           success: false,
           error: 'Task not found',
         });
       }
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: task,
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 );
@@ -175,7 +176,7 @@ router.patch(
   validateBody(updateTaskSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const oldTask = await taskService.getTaskById(req.params.id);
+      const oldTask = await taskService.getTaskById(req.params['id'] as string);
       if (!oldTask) {
         return res.status(404).json({
           success: false,
@@ -184,7 +185,7 @@ router.patch(
       }
 
       const oldStatus = oldTask.status;
-      const task = await taskService.updateTask(req.params.id, req.body);
+      const task = await taskService.updateTask(req.params['id'] as string, req.body);
 
       // Emit WebSocket events
       emitTaskUpdated(io, task);
@@ -198,12 +199,12 @@ router.patch(
         }
       }
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: task,
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 );
@@ -230,10 +231,10 @@ router.delete(
   '/:id',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await taskService.deleteTask(req.params.id);
+      await taskService.deleteTask(req.params['id'] as string);
 
       // Emit WebSocket event
-      emitTaskDeleted(io, req.params.id);
+      emitTaskDeleted(io, req.params['id'] as string);
 
       res.status(200).json({
         success: true,

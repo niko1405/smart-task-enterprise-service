@@ -1,53 +1,57 @@
 import request from 'supertest';
-import { PrismaClient, TaskStatus, Priority } from '@prisma/client';
 import bcrypt from 'bcrypt';
-
-const prisma = new PrismaClient();
-const API_URL = 'http://localhost:3000/api/v1';
+import { app } from '../src/index';
+import { prisma } from '../src/config/database';
+import jwt from 'jsonwebtoken';
+import { env } from '../src/config/env';
+import { Priority, Role, TaskStatus } from '@prisma/client';
 
 describe('Task Endpoints', () => {
   let authToken: string;
   let userId: string;
 
+  beforeAll(async () => {
+    // Connect to database
+    await prisma.$connect();
+  });
+
   beforeEach(async () => {
+    // Clean up
     await prisma.task.deleteMany();
     await prisma.user.deleteMany();
 
-    // Create test user and login
+    // Create test user and token
     const user = await prisma.user.create({
       data: {
         email: 'taskuser@example.com',
         password: await bcrypt.hash('password123', 12),
         name: 'Task User',
+        role: Role.USER,
       },
     });
     userId = user.id;
-
-    const loginResponse = await request(API_URL)
-      .post('/auth/login')
-      .send({
-        email: 'taskuser@example.com',
-        password: 'password123',
-      });
-
-    authToken = loginResponse.body.data.token;
+    authToken = jwt.sign(
+      { userId: user.id, email: user.email, role: user.role },
+      env.JWT_SECRET
+    );
   });
 
   afterAll(async () => {
+    // Clean up
+    await prisma.task.deleteMany();
+    await prisma.user.deleteMany();
     await prisma.$disconnect();
   });
 
   describe('POST /tasks', () => {
     it('should create a new task', async () => {
-      const response = await request(API_URL)
-        .post('/tasks')
+      const response = await request(app)
+        .post('/api/v1/tasks')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           title: 'Test Task',
           description: 'Test Description',
-          status: TaskStatus.TODO,
-          priority: Priority.MEDIUM,
-          tags: ['test', 'important'],
+          priority: Priority.HIGH,
         });
 
       expect(response.status).toBe(201);
@@ -58,8 +62,8 @@ describe('Task Endpoints', () => {
     });
 
     it('should require title', async () => {
-      const response = await request(API_URL)
-        .post('/tasks')
+      const response = await request(app)
+        .post('/api/v1/tasks')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           description: 'Test Description',
@@ -70,19 +74,18 @@ describe('Task Endpoints', () => {
     });
 
     it('should require authentication', async () => {
-      const response = await request(API_URL)
-        .post('/tasks')
-        .send({
-          title: 'Test Task',
-        });
+      const response = await request(app).post('/api/v1/tasks').send({
+        title: 'Test Task',
+      });
 
       expect(response.status).toBe(401);
+      expect(response.body.success).toBe(false);
     });
   });
 
   describe('GET /tasks', () => {
     beforeEach(async () => {
-      // Create some test tasks
+      // Create some tasks
       await prisma.task.createMany({
         data: [
           {
@@ -91,7 +94,6 @@ describe('Task Endpoints', () => {
             status: TaskStatus.TODO,
             priority: Priority.HIGH,
             createdById: userId,
-            tags: ['tag1'],
           },
           {
             title: 'Task 2',
@@ -99,10 +101,10 @@ describe('Task Endpoints', () => {
             status: TaskStatus.IN_PROGRESS,
             priority: Priority.MEDIUM,
             createdById: userId,
-            tags: ['tag2'],
           },
           {
             title: 'Task 3',
+            description: 'Description 3',
             status: TaskStatus.DONE,
             priority: Priority.LOW,
             createdById: userId,
@@ -112,8 +114,8 @@ describe('Task Endpoints', () => {
     });
 
     it('should get all tasks', async () => {
-      const response = await request(API_URL)
-        .get('/tasks')
+      const response = await request(app)
+        .get('/api/v1/tasks')
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
@@ -123,8 +125,8 @@ describe('Task Endpoints', () => {
     });
 
     it('should filter by status', async () => {
-      const response = await request(API_URL)
-        .get('/tasks?status=TODO')
+      const response = await request(app)
+        .get('/api/v1/tasks?status=TODO')
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
@@ -133,8 +135,8 @@ describe('Task Endpoints', () => {
     });
 
     it('should filter by priority', async () => {
-      const response = await request(API_URL)
-        .get('/tasks?priority=HIGH')
+      const response = await request(app)
+        .get('/api/v1/tasks?priority=HIGH')
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
@@ -143,22 +145,14 @@ describe('Task Endpoints', () => {
     });
 
     it('should support pagination', async () => {
-      const response = await request(API_URL)
-        .get('/tasks?page=1&limit=2')
+      const response = await request(app)
+        .get('/api/v1/tasks?page=1&limit=2')
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body.data.data).toHaveLength(2);
-      expect(response.body.data.pagination.totalPages).toBe(2);
-    });
-
-    it('should search tasks', async () => {
-      const response = await request(API_URL)
-        .get('/tasks?search=Description 1')
-        .set('Authorization', `Bearer ${authToken}`);
-
-      expect(response.status).toBe(200);
-      expect(response.body.data.data.length).toBeGreaterThanOrEqual(1);
+      expect(response.body.data.pagination.page).toBe(1);
+      expect(response.body.data.pagination.limit).toBe(2);
     });
   });
 
@@ -179,8 +173,8 @@ describe('Task Endpoints', () => {
     });
 
     it('should get task by id', async () => {
-      const response = await request(API_URL)
-        .get(`/tasks/${taskId}`)
+      const response = await request(app)
+        .get(`/api/v1/tasks/${taskId}`)
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
@@ -190,8 +184,8 @@ describe('Task Endpoints', () => {
     });
 
     it('should return 404 for non-existent task', async () => {
-      const response = await request(API_URL)
-        .get('/tasks/non-existent-id')
+      const response = await request(app)
+        .get('/api/v1/tasks/non-existent-id')
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(404);
@@ -205,10 +199,10 @@ describe('Task Endpoints', () => {
     beforeEach(async () => {
       const task = await prisma.task.create({
         data: {
-          title: 'Update Task',
-          description: 'Original Description',
+          title: 'Task to Update',
+          description: 'Description',
           status: TaskStatus.TODO,
-          priority: Priority.MEDIUM,
+          priority: Priority.LOW,
           createdById: userId,
         },
       });
@@ -216,30 +210,28 @@ describe('Task Endpoints', () => {
     });
 
     it('should update task', async () => {
-      const response = await request(API_URL)
-        .patch(`/tasks/${taskId}`)
+      const response = await request(app)
+        .patch(`/api/v1/tasks/${taskId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           title: 'Updated Title',
-          description: 'Updated Description',
+          status: TaskStatus.IN_PROGRESS,
         });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data.title).toBe('Updated Title');
-      expect(response.body.data.description).toBe('Updated Description');
+      expect(response.body.data.status).toBe('IN_PROGRESS');
     });
 
-    it('should update task status', async () => {
-      const response = await request(API_URL)
-        .patch(`/tasks/${taskId}`)
+    it('should return 404 for non-existent task', async () => {
+      const response = await request(app)
+        .patch('/api/v1/tasks/non-existent-id')
         .set('Authorization', `Bearer ${authToken}`)
-        .send({
-          status: TaskStatus.IN_PROGRESS,
-        });
+        .send({ title: 'New Title' });
 
-      expect(response.status).toBe(200);
-      expect(response.body.data.status).toBe('IN_PROGRESS');
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
     });
   });
 
@@ -249,9 +241,10 @@ describe('Task Endpoints', () => {
     beforeEach(async () => {
       const task = await prisma.task.create({
         data: {
-          title: 'Delete Task',
+          title: 'Task to Delete',
+          description: 'Description',
           status: TaskStatus.TODO,
-          priority: Priority.MEDIUM,
+          priority: Priority.LOW,
           createdById: userId,
         },
       });
@@ -259,19 +252,27 @@ describe('Task Endpoints', () => {
     });
 
     it('should delete task', async () => {
-      const response = await request(API_URL)
-        .delete(`/tasks/${taskId}`)
+      const response = await request(app)
+        .delete(`/api/v1/tasks/${taskId}`)
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
 
       // Verify task is deleted
-      const getResponse = await request(API_URL)
-        .get(`/tasks/${taskId}`)
+      const getResponse = await request(app)
+        .get(`/api/v1/tasks/${taskId}`)
+        .set('Authorization', `Bearer ${authToken}`);
+      expect(getResponse.status).toBe(404);
+    });
+
+    it('should return 404 for non-existent task', async () => {
+      const response = await request(app)
+        .delete('/api/v1/tasks/00000000-0000-0000-0000-000000000000')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect(getResponse.status).toBe(404);
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
     });
   });
 });

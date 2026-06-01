@@ -20,6 +20,7 @@ services:
       postgres:
         condition: service_healthy
       mailpit:
+        condition: service_started
     networks:
       - smart-task-network
     restart: unless-stopped

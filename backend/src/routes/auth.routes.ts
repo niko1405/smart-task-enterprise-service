@@ -126,12 +126,12 @@ router.get(
           error: 'User not found',
         });
       }
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: user,
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 );

@@ -1,4 +1,4 @@
-import express, { Application, Request, Response, NextFunction } from 'express';
+import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -122,5 +122,11 @@ process.on('SIGINT', async () => {
   });
 });
 
-startServer();
+// Export for testing
+export { app, httpServer };
+
+// Start server only if not in test mode
+if (process.env.NODE_ENV !== 'test') {
+  startServer();
+}
 

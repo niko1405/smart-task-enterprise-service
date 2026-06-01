@@ -1,24 +1,33 @@
 import request from 'supertest';
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
-
-const prisma = new PrismaClient();
-const API_URL = 'http://localhost:3000/api/v1';
+import { app } from '../src/index';
+import { prisma } from '../src/config/database';
+import jwt from 'jsonwebtoken';
+import { env } from '../src/config/env';
 
 describe('Auth Endpoints', () => {
+  beforeAll(async () => {
+    // Connect to database
+    await prisma.$connect();
+  });
+
   beforeEach(async () => {
+    // Clean up test data
     await prisma.task.deleteMany();
     await prisma.user.deleteMany();
   });
 
   afterAll(async () => {
+    // Clean up and disconnect
+    await prisma.task.deleteMany();
+    await prisma.user.deleteMany();
     await prisma.$disconnect();
   });
 
   describe('POST /auth/register', () => {
     it('should register a new user successfully', async () => {
-      const response = await request(API_URL)
-        .post('/auth/register')
+      const response = await request(app)
+        .post('/api/v1/auth/register')
         .send({
           email: 'test@example.com',
           password: 'password123',
@@ -43,8 +52,8 @@ describe('Auth Endpoints', () => {
         },
       });
 
-      const response = await request(API_URL)
-        .post('/auth/register')
+      const response = await request(app)
+        .post('/api/v1/auth/register')
         .send({
           email: 'duplicate@example.com',
           password: 'password123',
@@ -56,8 +65,8 @@ describe('Auth Endpoints', () => {
     });
 
     it('should validate email format', async () => {
-      const response = await request(API_URL)
-        .post('/auth/register')
+      const response = await request(app)
+        .post('/api/v1/auth/register')
         .send({
           email: 'invalid-email',
           password: 'password123',
@@ -69,8 +78,8 @@ describe('Auth Endpoints', () => {
     });
 
     it('should require password of at least 8 characters', async () => {
-      const response = await request(API_URL)
-        .post('/auth/register')
+      const response = await request(app)
+        .post('/api/v1/auth/register')
         .send({
           email: 'test@example.com',
           password: 'short',
@@ -84,6 +93,7 @@ describe('Auth Endpoints', () => {
 
   describe('POST /auth/login', () => {
     beforeEach(async () => {
+      // Create a test user
       await prisma.user.create({
         data: {
           email: 'login@example.com',
@@ -94,8 +104,8 @@ describe('Auth Endpoints', () => {
     });
 
     it('should login with valid credentials', async () => {
-      const response = await request(API_URL)
-        .post('/auth/login')
+      const response = await request(app)
+        .post('/api/v1/auth/login')
         .send({
           email: 'login@example.com',
           password: 'password123',
@@ -108,8 +118,8 @@ describe('Auth Endpoints', () => {
     });
 
     it('should return 401 for invalid password', async () => {
-      const response = await request(API_URL)
-        .post('/auth/login')
+      const response = await request(app)
+        .post('/api/v1/auth/login')
         .send({
           email: 'login@example.com',
           password: 'wrongpassword',
@@ -120,8 +130,8 @@ describe('Auth Endpoints', () => {
     });
 
     it('should return 401 for non-existent user', async () => {
-      const response = await request(API_URL)
-        .post('/auth/login')
+      const response = await request(app)
+        .post('/api/v1/auth/login')
         .send({
           email: 'nonexistent@example.com',
           password: 'password123',
@@ -137,6 +147,7 @@ describe('Auth Endpoints', () => {
     let userId: string;
 
     beforeEach(async () => {
+      // Create user and generate token
       const user = await prisma.user.create({
         data: {
           email: 'me@example.com',
@@ -145,21 +156,15 @@ describe('Auth Endpoints', () => {
         },
       });
       userId = user.id;
-
-      // Login to get token
-      const response = await request(API_URL)
-        .post('/auth/login')
-        .send({
-          email: 'me@example.com',
-          password: 'password123',
-        });
-
-      authToken = response.body.data.token;
+      authToken = jwt.sign(
+        { userId: user.id, email: user.email, role: user.role },
+        env.JWT_SECRET
+      );
     });
 
     it('should get current user profile', async () => {
-      const response = await request(API_URL)
-        .get('/auth/me')
+      const response = await request(app)
+        .get('/api/v1/auth/me')
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
@@ -169,7 +174,16 @@ describe('Auth Endpoints', () => {
     });
 
     it('should return 401 without token', async () => {
-      const response = await request(API_URL).get('/auth/me');
+      const response = await request(app).get('/api/v1/auth/me');
+
+      expect(response.status).toBe(401);
+      expect(response.body.success).toBe(false);
+    });
+
+    it('should return 401 with invalid token', async () => {
+      const response = await request(app)
+        .get('/api/v1/auth/me')
+        .set('Authorization', 'Bearer invalid-token');
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);

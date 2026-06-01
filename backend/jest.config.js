@@ -21,7 +21,10 @@ module.exports = {
       statements: 80,
     },
   },
+  // Load env vars BEFORE setup files
+  setupFiles: ['dotenv/config'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+  runInBand: true,
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
