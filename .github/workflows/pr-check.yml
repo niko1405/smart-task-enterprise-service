@@ -1,0 +1,83 @@
+name: PR Check
+
+on:
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  dependency-check:
+    name: Dependency Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Check Backend Dependencies
+        run: |
+          cd backend
+          npm ci
+          npm outdated || true
+      - name: Check Frontend Dependencies
+        run: |
+          cd frontend
+          npm ci
+          npm outdated || true
+
+  license-check:
+    name: License Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install -g license-checker
+      - name: Check Backend Licenses
+        run: |
+          cd backend
+          license-checker --production --onlyAllow "MIT;Apache-2.0;BSD-3-Clause;BSD-2-Clause;ISC;0BSD" || true
+      - name: Check Frontend Licenses
+        run: |
+          cd frontend
+          license-checker --production --onlyAllow "MIT;Apache-2.0;BSD-3-Clause;BSD-2-Clause;ISC;0BSD" || true
+
+  backend-ci:
+    name: Backend CI
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.changed_files, 'backend/')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      - name: Run Backend CI
+        run: |
+          cd backend
+          npm ci
+          npm run lint
+          npm run test
+          npm run build
+          npx tsc --noEmit
+
+  frontend-ci:
+    name: Frontend CI
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.changed_files, 'frontend/')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: Run Frontend CI
+        run: |
+          cd frontend
+          npm ci
+          npm run lint
+          npm run test
+          npm run build
+          npx tsc --noEmit
