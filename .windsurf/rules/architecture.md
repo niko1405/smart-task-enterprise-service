@@ -185,3 +185,83 @@ smart-task-enterprise-service/
 - Commit-Messages müssen konventionell sein (feat:, fix:, docs:, etc.).
 - Keine direkten Commits auf main/master branch.
 - Pull-Requests müssen beschrieben und getestet sein.
+
+## Pflicht-Checkliste für den Agenten bei jeder Implementierung
+
+Nach JEDER Code-Änderung MÜSSEN die folgenden Schritte in dieser Reihenfolge ausgeführt und verifiziert werden, bevor ein Commit erstellt wird:
+
+### 1. TypeScript Compile-Check
+```bash
+# Backend
+cd backend && npx tsc --noEmit
+
+# Frontend
+cd frontend && npx tsc --noEmit
+```
+- **Pflicht:** Kein einziger TypeScript-Fehler erlaubt. Warnungen müssen bewertet werden.
+
+### 2. Linter
+```bash
+# Backend
+cd backend && npm run lint
+
+# Frontend
+cd frontend && npm run lint
+```
+- **Pflicht:** Keine ESLint-Errors. Warnings müssen dokumentiert oder behoben werden.
+- Regel: Kein `any`-Typ, max. Komplexität 10, max. Funktionslänge 50 Zeilen.
+
+### 3. Tests ausführen
+```bash
+# Backend
+cd backend && npm test
+
+# Frontend
+cd frontend && npm test
+```
+- **Pflicht:** Alle Tests müssen grün sein.
+- Neue Funktionalität MUSS mit Unit-Tests abgedeckt sein (Backend: ≥80%, Frontend: ≥70%).
+- Bei neuen API-Endpoints: Supertest-Integrationstests schreiben.
+- Bei neuen React-Komponenten: React Testing Library Tests schreiben.
+
+### 4. Security Audit
+```bash
+cd backend && npm audit --audit-level=high
+cd frontend && npm audit --audit-level=high
+```
+- **Pflicht:** Keine High-Severity Vulnerabilities. Moderate müssen dokumentiert werden.
+- Bei neuen Dependencies: immer `npm audit` prüfen.
+
+### 5. Zod-Validierung prüfen
+- Jeder neue API-Endpoint MUSS eine Zod-Schema-Validierung für Request-Body, Query-Params und Path-Params haben.
+- Zod-Schemas MÜSSEN in `backend/src/models/` oder `backend/src/types/` definiert sein.
+
+### 6. Environment-Variablen prüfen
+- Jede neue sensible Konfiguration MUSS als Umgebungsvariable implementiert sein.
+- `backend/.env.example` und `frontend/.env.example` MÜSSEN aktuell gehalten werden.
+- Hardcodierte Secrets oder URLs sind VERBOTEN.
+
+### 7. Containerisierung (Docker)
+- Neue Services oder Konfigurationsänderungen MÜSSEN in `docker-compose.yml` reflektiert werden.
+- `.dockerignore` muss aktuell bleiben.
+
+### Commit-Konvention
+- Format: `type(scope): beschreibung`
+- Typen: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `ci`, `build`
+- Beispiel: `feat(tasks): POST /api/v1/tasks Endpoint mit Zod-Validierung`
+
+### Containerisierung (Docker)
+- Backend und Frontend müssen in separaten Containern laufen.
+- Nutze Docker Compose für lokale Entwicklung und Orchestrierung.
+- Implementiere Multi-Stage Builds für optimierte Image-Größe.
+- Nutze Alpine Linux als Base-Image für kleinere Images.
+- Implementiere Health-Checks für alle Container.
+- Container müssen über dedizierte Netzwerke kommunizieren.
+- Nutze Volumes für Hot-Reloading in der Entwicklung.
+- Mailpit muss als separater Container für Email-Testing laufen.
+- Environment-Variablen müssen via env_file in Docker Compose geladen werden.
+- .dockerignore muss in beiden Projekten vorhanden sein.
+- Container-Ports müssen konsistent mit lokaler Entwicklung sein (Backend: 3000, Frontend: 5173, Mailpit: 1025/8025).
+
+## Development-Workflow mit Docker
+- Lokale Entwicklung: `docker-compose up` startet alle Services.
