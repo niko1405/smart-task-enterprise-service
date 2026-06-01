@@ -1,0 +1,20 @@
+{
+  "name": "smart-task-enterprise-service",
+  "version": "1.0.0",
+  "description": "Smart-Task Enterprise Service - Monorepo Root",
+  "private": true,
+  "scripts": {
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "9.1.7",
+    "@commitlint/cli": "19.8.1",
+    "@commitlint/config-conventional": "19.8.1",
+    "lint-staged": "15.5.2",
+    "eslint": "8.57.1",
+    "eslint-config-prettier": "9.1.0",
+    "prettier": "3.5.3",
+    "@typescript-eslint/eslint-plugin": "7.18.0",
+    "@typescript-eslint/parser": "7.18.0"
+  }
+}

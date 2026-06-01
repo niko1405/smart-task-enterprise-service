@@ -1,0 +1,14 @@
+node_modules/
+npm-debug.log*
+dist/
+.env
+.env.local
+.env.*.local
+.git/
+.gitignore
+.eslintrc.json
+README.md
+tests/
+coverage/
+*.log
+.DS_Store
