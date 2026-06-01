@@ -1,0 +1,11 @@
+title,description,status,priority,dueDate,tags,assignedToEmail,createdByEmail
+Implement user authentication,Setup JWT-based authentication with login and register endpoints,DONE,HIGH,2024-12-20,"auth,jwt,backend",john.doe@example.com,admin@smarttask.com
+Create database schema,Design and implement PostgreSQL schema with Prisma,MEDIUM,2024-12-22,"database,prisma,schema",jane.smith@example.com,admin@smarttask.com
+Add email notifications,Integrate nodemailer for sending task status updates,IN_PROGRESS,HIGH,2024-12-25,"email,notifications,integration",bob.wilson@example.com,john.doe@example.com
+Frontend dashboard design,Create responsive dashboard with task list view,TODO,MEDIUM,2024-12-28,"frontend,ui,design",john.doe@example.com,jane.smith@example.com
+WebSocket real-time sync,Implement Socket.io for live task updates,TODO,HIGH,2024-12-30,"websocket,realtime,socket.io",jane.smith@example.com,admin@smarttask.com
+Write API documentation,Document all endpoints with Swagger/OpenAPI,DONE,LOW,2024-12-18,"documentation,api,swagger",bob.wilson@example.com,admin@smarttask.com
+Setup CI/CD pipeline,Configure GitHub Actions for automated testing and deployment,TODO,MEDIUM,2025-01-05,"cicd,github,devops",john.doe@example.com,admin@smarttask.com
+Implement task search,Add full-text search functionality for tasks,IN_PROGRESS,MEDIUM,2025-01-10,"search,feature,backend",jane.smith@example.com,john.doe@example.com
+Mobile responsiveness,Optimize UI for mobile devices,TODO,LOW,2025-01-15,"mobile,responsive,frontend",bob.wilson@example.com,jane.smith@example.com
+Security audit,Perform security review and fix vulnerabilities,TODO,HIGH,2025-01-20,"security,audit,compliance",admin@smarttask.com,admin@smarttask.com

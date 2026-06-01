@@ -1,0 +1,5 @@
+email,password,name,role
+admin@smarttask.com,admin123,Admin User,ADMIN
+john.doe@example.com,password123,John Doe,USER
+jane.smith@example.com,password123,Jane Smith,USER
+bob.wilson@example.com,password123,Bob Wilson,USER

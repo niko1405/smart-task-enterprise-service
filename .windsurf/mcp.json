@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "smart-task-db": {
+      "command": "node",
+      "args": ["backend/mcp/index.ts"],
+      "cwd": "/home/u7411/CascadeProjects/smart-task-enterprise-service",
+      "env": {
+        "DATABASE_URL": "postgresql://smarttask:smarttask_secret@localhost:5432/smarttask_db?schema=public"
+      }
+    }
+  }
+}

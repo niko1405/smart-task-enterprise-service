@@ -17,7 +17,9 @@ services:
     volumes:
       - ./backend/src:/app/src
     depends_on:
-      - mailpit
+      postgres:
+        condition: service_healthy
+      mailpit:
     networks:
       - smart-task-network
     restart: unless-stopped
@@ -43,6 +45,27 @@ services:
       - smart-task-network
     restart: unless-stopped
 
+  postgres:
+    image: postgres:16-alpine
+    container_name: smart-task-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=smarttask
+      - POSTGRES_PASSWORD=smarttask_secret
+      - POSTGRES_DB=smarttask_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - smart-task-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smarttask -d smarttask_db"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
   mailpit:
     image: axllent/mailpit:v1.20
     container_name: smart-task-mailpit
@@ -54,6 +77,9 @@ services:
     networks:
       - smart-task-network
     restart: unless-stopped
+
+volumes:
+  postgres_data:
 
 networks:
   smart-task-network:
