@@ -245,6 +245,17 @@ cd frontend && npm audit --audit-level=high
 - Neue Services oder Konfigurationsänderungen MÜSSEN in `docker-compose.yml` reflektiert werden.
 - `.dockerignore` muss aktuell bleiben.
 
+### 8. Git-Commit (PFLICHT am Ende jeder Bearbeitung)
+- Nach jeder abgeschlossenen Bearbeitung MUSS `git status` leer sein.
+- Alle Änderungen MÜSSEN in sinnvolle, atomare Commits verpackt sein.
+- Kein Commit darf unzusammenhängende Änderungen mischen.
+- Verifizierung vor Abschluss:
+```bash
+git status   # muss "nothing to commit" zeigen
+git log --oneline -3  # zur Kontrolle der letzten Commits
+```
+- **Pflicht:** Der Agent darf eine Bearbeitung erst als abgeschlossen melden, wenn `git status` keine offenen Änderungen mehr zeigt.
+
 ### Commit-Konvention
 - Format: `type(scope): beschreibung`
 - Typen: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `ci`, `build`
