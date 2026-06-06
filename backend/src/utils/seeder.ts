@@ -2,7 +2,7 @@ import { parse } from 'csv-parse';
 import * as fs from 'fs';
 import * as path from 'path';
 import { PrismaClient, Role, TaskStatus, Priority } from '@prisma/client';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { logger } from './logger';
 
 const prisma = new PrismaClient();

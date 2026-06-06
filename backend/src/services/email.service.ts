@@ -34,8 +34,8 @@ export class EmailService {
     });
   }
 
-  private getTaskEmailRecipient(task: TaskWithRelations) {
-    return task.assignedTo || task.createdBy;
+  private getTaskEmailRecipient(task: TaskWithRelations): { email: string; name: string } {
+    return task.assignedTo ?? task.createdBy;
   }
 
   private buildTaskCompletionHtml(task: TaskWithRelations, recipientName: string): string {

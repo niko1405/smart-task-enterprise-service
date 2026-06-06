@@ -1,5 +1,5 @@
 import request from 'supertest';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { app } from '../src/index';
 import { prisma } from '../src/config/database';
 import jwt from 'jsonwebtoken';
@@ -154,6 +154,36 @@ describe('Task Endpoints', () => {
       expect(response.body.data.pagination.page).toBe(1);
       expect(response.body.data.pagination.limit).toBe(2);
     });
+
+    it('should filter by tags', async () => {
+      await prisma.task.create({
+        data: {
+          title: 'Tagged Task',
+          status: TaskStatus.TODO,
+          priority: Priority.HIGH,
+          tags: ['urgent', 'backend'],
+          createdById: userId,
+        },
+      });
+
+      const response = await request(app)
+        .get('/api/v1/tasks?tags=urgent')
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.data).toHaveLength(1);
+      expect(response.body.data.data[0].title).toBe('Tagged Task');
+    });
+
+    it('should filter by search term', async () => {
+      const response = await request(app)
+        .get('/api/v1/tasks?search=Task+1')
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.data).toHaveLength(1);
+      expect(response.body.data.data[0].title).toBe('Task 1');
+    });
   });
 
   describe('GET /tasks/:id', () => {
@@ -222,6 +252,26 @@ describe('Task Endpoints', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data.title).toBe('Updated Title');
       expect(response.body.data.status).toBe('IN_PROGRESS');
+    });
+
+    it('should update task status to DONE', async () => {
+      const response = await request(app)
+        .patch(`/api/v1/tasks/${taskId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ status: TaskStatus.DONE });
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.status).toBe('DONE');
+    });
+
+    it('should update task with dueDate', async () => {
+      const response = await request(app)
+        .patch(`/api/v1/tasks/${taskId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ dueDate: '2025-12-31T00:00:00.000Z' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.dueDate).toBeTruthy();
     });
 
     it('should return 404 for non-existent task', async () => {

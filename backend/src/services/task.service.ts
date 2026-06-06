@@ -1,9 +1,16 @@
 import { prisma } from '../config/database';
 import { CreateTaskInput, UpdateTaskInput, TaskFilterInput } from '../models/task.model';
-import { TaskStatus } from '@prisma/client';
+import { Prisma, TaskStatus } from '@prisma/client';
+
+type TaskWithAssociations = Prisma.TaskGetPayload<{
+  include: {
+    createdBy: { select: { id: true; email: true; name: true } };
+    assignedTo: { select: { id: true; email: true; name: true } };
+  };
+}>;
 
 export class TaskService {
-  async createTask(userId: string, input: CreateTaskInput) {
+  async createTask(userId: string, input: CreateTaskInput): Promise<TaskWithAssociations> {
     return await prisma.task.create({
       data: {
         title: input.title,
@@ -26,8 +33,8 @@ export class TaskService {
     });
   }
 
-  private buildWhereClause(filters: TaskFilterInput): Record<string, unknown> {
-    const where: Record<string, unknown> = {};
+  private buildWhereClause(filters: TaskFilterInput): Prisma.TaskWhereInput {
+    const where: Prisma.TaskWhereInput = {};
 
     if (filters.status) where.status = filters.status;
     if (filters.priority) where.priority = filters.priority;
@@ -77,7 +84,7 @@ export class TaskService {
     };
   }
 
-  async getTaskById(taskId: string) {
+  async getTaskById(taskId: string): Promise<TaskWithAssociations | null> {
     return await prisma.task.findUnique({
       where: { id: taskId },
       include: {
@@ -91,7 +98,7 @@ export class TaskService {
     });
   }
 
-  async updateTask(taskId: string, input: UpdateTaskInput) {
+  async updateTask(taskId: string, input: UpdateTaskInput): Promise<TaskWithAssociations> {
     const updateData: Record<string, unknown> = {};
 
     if (input.title !== undefined) updateData.title = input.title;
@@ -118,7 +125,7 @@ export class TaskService {
     });
   }
 
-  async deleteTask(taskId: string) {
+  async deleteTask(taskId: string): Promise<void> {
     await prisma.task.delete({
       where: { id: taskId },
     });
