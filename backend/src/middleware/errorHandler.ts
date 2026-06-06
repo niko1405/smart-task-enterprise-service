@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
+import { logger } from '../utils/logger';
 
 export interface ApiError extends Error {
   statusCode?: number;
@@ -10,6 +11,7 @@ export const errorHandler = (
   err: ApiError,
   _req: Request,
   res: Response,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _next: NextFunction
 ): void => {
   let statusCode = err.statusCode || 500;
@@ -46,7 +48,7 @@ export const errorHandler = (
 
   // Log error in development
   if (process.env.NODE_ENV === 'development') {
-    console.error('Error:', err);
+    logger.error({ err }, 'Error occurred');
   }
 
   res.status(statusCode).json({

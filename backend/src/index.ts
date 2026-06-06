@@ -12,6 +12,7 @@ import { seedDatabase } from './utils/seeder';
 import { errorHandler } from './middleware/errorHandler';
 import { setupSwagger } from './config/swagger';
 import { setupWebSocketHandlers } from './websocket/handlers';
+import { logger } from './utils/logger';
 
 // Routes
 import { authRouter } from './routes/auth.routes';
@@ -86,39 +87,41 @@ async function startServer(): Promise<void> {
 
     // Seed database if TEST_MODE is enabled
     if (env.TEST_MODE) {
-      console.log('🧪 TEST_MODE enabled - seeding database...');
+      logger.info('🧪 TEST_MODE enabled - seeding database...');
       await seedDatabase();
     }
 
     // Start HTTP server
     httpServer.listen(env.PORT, () => {
-      console.log(`🚀 Server running on port ${env.PORT}`);
-      console.log(`📚 API Documentation: http://localhost:${env.PORT}/api-docs`);
-      console.log(`🔌 WebSocket server ready`);
-      console.log(`📧 Mailpit UI: http://localhost:8025`);
+      logger.info(`🚀 Server running on port ${env.PORT}`);
+      logger.info(`📚 API Documentation: http://localhost:${env.PORT}/api-docs`);
+      logger.info('🔌 WebSocket server ready');
+      logger.info('📧 Mailpit UI: http://localhost:8025');
     });
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
+    logger.error({ error }, '❌ Failed to start server');
     process.exit(1);
   }
 }
 
 // Graceful shutdown
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, shutting down gracefully');
-  await disconnectDatabase();
-  httpServer.close(() => {
-    console.log('Server closed');
-    process.exit(0);
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM received, shutting down gracefully');
+  void disconnectDatabase().then(() => {
+    httpServer.close(() => {
+      logger.info('Server closed');
+      process.exit(0);
+    });
   });
 });
 
-process.on('SIGINT', async () => {
-  console.log('SIGINT received, shutting down gracefully');
-  await disconnectDatabase();
-  httpServer.close(() => {
-    console.log('Server closed');
-    process.exit(0);
+process.on('SIGINT', () => {
+  logger.info('SIGINT received, shutting down gracefully');
+  void disconnectDatabase().then(() => {
+    httpServer.close(() => {
+      logger.info('Server closed');
+      process.exit(0);
+    });
   });
 });
 
@@ -127,6 +130,6 @@ export { app, httpServer };
 
 // Start server only if not in test mode
 if (process.env.NODE_ENV !== 'test') {
-  startServer();
+  void startServer();
 }
 

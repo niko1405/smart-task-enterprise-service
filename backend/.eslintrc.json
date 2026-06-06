@@ -19,8 +19,8 @@
     "@typescript-eslint/no-misused-promises": "error",
     "@typescript-eslint/await-thenable": "error",
     "complexity": ["error", 10],
-    "max-lines-per-function": ["warn", 50],
-    "no-console": "warn"
+    "max-lines-per-function": ["warn", 80],
+    "no-console": ["error", { "allow": ["time", "timeEnd"] }]
   },
   "env": {
     "node": true,

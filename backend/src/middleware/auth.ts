@@ -3,11 +3,9 @@ import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { UserPayload } from '../types';
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: UserPayload;
-    }
+declare module 'express-serve-static-core' {
+  interface Request {
+    user?: UserPayload;
   }
 }
 

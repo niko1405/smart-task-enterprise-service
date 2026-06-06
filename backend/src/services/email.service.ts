@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { env } from '../config/env';
+import { logger } from '../utils/logger';
 
 interface TaskWithRelations {
   id: string;
@@ -33,15 +34,12 @@ export class EmailService {
     });
   }
 
-  async sendTaskCompletionEmail(task: TaskWithRelations): Promise<void> {
-    const recipient = task.assignedTo || task.createdBy;
+  private getTaskEmailRecipient(task: TaskWithRelations) {
+    return task.assignedTo || task.createdBy;
+  }
 
-    if (!recipient) {
-      console.warn('No recipient found for task completion email');
-      return;
-    }
-
-    const htmlContent = `
+  private buildTaskCompletionHtml(task: TaskWithRelations, recipientName: string): string {
+    return `
       <!DOCTYPE html>
       <html>
       <head>
@@ -61,7 +59,7 @@ export class EmailService {
             <h1>✅ Task Completed!</h1>
           </div>
           <div class="content">
-            <p>Hello ${recipient.name},</p>
+            <p>Hello ${recipientName},</p>
             <p>A task has been marked as completed:</p>
             <div class="task-title">${task.title}</div>
             <p>Status: <span class="status-badge">DONE</span></p>
@@ -75,6 +73,17 @@ export class EmailService {
       </body>
       </html>
     `;
+  }
+
+  async sendTaskCompletionEmail(task: TaskWithRelations): Promise<void> {
+    const recipient = this.getTaskEmailRecipient(task);
+
+    if (!recipient) {
+      logger.warn('No recipient found for task completion email');
+      return;
+    }
+
+    const htmlContent = this.buildTaskCompletionHtml(task, recipient.name);
 
     try {
       await this.transporter.sendMail({
@@ -84,9 +93,9 @@ export class EmailService {
         html: htmlContent,
       });
 
-      console.log(`📧 Task completion email sent to ${recipient.email}`);
+      logger.info(`📧 Task completion email sent to ${recipient.email}`);
     } catch (error) {
-      console.error('❌ Failed to send email:', error);
+      logger.error({ error }, '❌ Failed to send email');
       // Don't throw error - email failure shouldn't break the task update
     }
   }
@@ -94,10 +103,10 @@ export class EmailService {
   async verifyConnection(): Promise<boolean> {
     try {
       await this.transporter.verify();
-      console.log('✅ Email server connection verified');
+      logger.info('✅ Email server connection verified');
       return true;
     } catch (error) {
-      console.error('❌ Email server connection failed:', error);
+      logger.error({ error }, '❌ Email server connection failed');
       return false;
     }
   }

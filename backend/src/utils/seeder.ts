@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { PrismaClient, Role, TaskStatus, Priority } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import { logger } from './logger';
 
 const prisma = new PrismaClient();
 
@@ -25,17 +26,17 @@ interface TaskCSVRow {
 }
 
 export async function seedDatabase(): Promise<void> {
-  console.log('🌱 Starting database seeding...');
+  logger.info('🌱 Starting database seeding...');
 
   try {
     // Wipe existing data
-    console.log('🗑️  Wiping existing data...');
+    logger.info('🗑️  Wiping existing data...');
     await prisma.task.deleteMany();
     await prisma.user.deleteMany();
-    console.log('✅ Database wiped');
+    logger.info('✅ Database wiped');
 
     // Seed users
-    console.log('👥 Seeding users...');
+    logger.info('👥 Seeding users...');
     const usersData = await readUsersCSV();
     const userMap = new Map<string, string>(); // email -> id
 
@@ -50,17 +51,17 @@ export async function seedDatabase(): Promise<void> {
         },
       });
       userMap.set(user.email, user.id);
-      console.log(`   Created user: ${user.email} (${user.role})`);
+      logger.info(`   Created user: ${user.email} (${user.role})`);
     }
 
     // Seed tasks
-    console.log('📋 Seeding tasks...');
+    logger.info('📋 Seeding tasks...');
     const tasksData = await readTasksCSV();
 
     for (const taskData of tasksData) {
       const createdById = userMap.get(taskData.createdByEmail);
       if (!createdById) {
-        console.warn(`   Warning: Creator ${taskData.createdByEmail} not found, skipping task`);
+        logger.warn(`   Warning: Creator ${taskData.createdByEmail} not found, skipping task`);
         continue;
       }
 
@@ -69,7 +70,7 @@ export async function seedDatabase(): Promise<void> {
         : null;
 
       if (taskData.assignedToEmail && !assignedToId) {
-        console.warn(`   Warning: Assignee ${taskData.assignedToEmail} not found, task will be unassigned`);
+        logger.warn(`   Warning: Assignee ${taskData.assignedToEmail} not found, task will be unassigned`);
       }
 
       const task = await prisma.task.create({
@@ -84,12 +85,12 @@ export async function seedDatabase(): Promise<void> {
           assignedToId,
         },
       });
-      console.log(`   Created task: ${task.title} (${task.status})`);
+      logger.info(`   Created task: ${task.title} (${task.status})`);
     }
 
-    console.log('✅ Database seeding completed successfully!');
+    logger.info('✅ Database seeding completed successfully!');
   } catch (error) {
-    console.error('❌ Error seeding database:', error);
+    logger.error({ error }, '❌ Error seeding database');
     throw error;
   } finally {
     await prisma.$disconnect();
@@ -108,6 +109,7 @@ async function readUsersCSV(): Promise<UserCSVRow[]> {
         skip_empty_lines: true,
         trim: true,
       },
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
       (err: Error | undefined, records: UserCSVRow[]) => {
         if (err) {
           reject(err);
@@ -131,6 +133,7 @@ async function readTasksCSV(): Promise<TaskCSVRow[]> {
         skip_empty_lines: true,
         trim: true,
       },
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
       (err: Error | undefined, records: Array<Record<string, string>>) => {
         if (err) {
           reject(err);
@@ -154,10 +157,11 @@ async function readTasksCSV(): Promise<TaskCSVRow[]> {
 
 // Run seeder if this file is executed directly
 if (require.main === module) {
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
   seedDatabase()
     .then(() => process.exit(0))
     .catch((error) => {
-      console.error(error);
+      logger.error({ error }, 'Seeder failed');
       process.exit(1);
     });
 }

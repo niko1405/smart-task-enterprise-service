@@ -26,28 +26,13 @@ export class TaskService {
     });
   }
 
-  async getTasks(filters: TaskFilterInput, _userId: string) {
-    const page = parseInt(filters.page, 10);
-    const limit = parseInt(filters.limit, 10);
-    const skip = (page - 1) * limit;
-
+  private buildWhereClause(filters: TaskFilterInput): Record<string, unknown> {
     const where: Record<string, unknown> = {};
 
-    if (filters.status) {
-      where.status = filters.status;
-    }
-
-    if (filters.priority) {
-      where.priority = filters.priority;
-    }
-
-    if (filters.assignedToId) {
-      where.assignedToId = filters.assignedToId;
-    }
-
-    if (filters.createdById) {
-      where.createdById = filters.createdById;
-    }
+    if (filters.status) where.status = filters.status;
+    if (filters.priority) where.priority = filters.priority;
+    if (filters.assignedToId) where.assignedToId = filters.assignedToId;
+    if (filters.createdById) where.createdById = filters.createdById;
 
     if (filters.tags) {
       where.tags = { hasSome: filters.tags.split(',') };
@@ -60,16 +45,24 @@ export class TaskService {
       ];
     }
 
+    return where;
+  }
+
+  async getTasks(filters: TaskFilterInput): Promise<{
+    data: unknown[];
+    pagination: { page: number; limit: number; total: number; totalPages: number };
+  }> {
+    const page = parseInt(filters.page, 10);
+    const limit = parseInt(filters.limit, 10);
+    const skip = (page - 1) * limit;
+    const where = this.buildWhereClause(filters);
+
     const [tasks, total] = await Promise.all([
       prisma.task.findMany({
         where,
         include: {
-          createdBy: {
-            select: { id: true, email: true, name: true },
-          },
-          assignedTo: {
-            select: { id: true, email: true, name: true },
-          },
+          createdBy: { select: { id: true, email: true, name: true } },
+          assignedTo: { select: { id: true, email: true, name: true } },
         },
         orderBy: { [filters.sortBy]: filters.sortOrder },
         skip,
@@ -80,12 +73,7 @@ export class TaskService {
 
     return {
       data: tasks,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   }
 

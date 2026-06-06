@@ -1,6 +1,7 @@
 import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
+import { logger } from '../utils/logger';
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -23,25 +24,24 @@ export function setupWebSocketHandlers(io: Server): void {
       };
       socket.userId = decoded.userId;
       socket.userRole = decoded.role;
-      next();
+      return next();
     } catch (error) {
-      next(new Error('Authentication error: Invalid token'));
+      return next(new Error('Authentication error: Invalid token'));
     }
   });
 
   io.on('connection', (socket: AuthenticatedSocket) => {
-    // eslint-disable-next-line no-console
-    console.log(`🔌 Client connected: ${socket.id} (User: ${socket.userId})`);
+    logger.info(`🔌 Client connected: ${socket.id} (User: ${socket.userId})`);
 
     // Join user-specific room for targeted updates
     if (socket.userId) {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       void socket.join(`user:${socket.userId}`);
     }
 
     // Handle disconnect
     socket.on('disconnect', () => {
-      // eslint-disable-next-line no-console
-      console.log(`🔌 Client disconnected: ${socket.id}`);
+      logger.info(`🔌 Client disconnected: ${socket.id}`);
     });
   });
 }
@@ -74,5 +74,6 @@ export function emitToUser(
   event: string,
   data: unknown
 ): void {
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
   io.to(`user:${userId}`).emit(event, data);
 }

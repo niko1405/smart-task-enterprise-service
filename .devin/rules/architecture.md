@@ -146,6 +146,16 @@ smart-task-enterprise-service/
 - Nutze Monitoring für System-Metriken (CPU, Memory, Disk).
 - Implementiere Health-Checks und Uptime-Monitoring.
 - Nutze Distributed Tracing für Microservices (falls zutreffend).
+- **WICHTIG: `console.log` ist VERBOTEN** - Nutze ausschließlich den Pino-Logger (`src/utils/logger.ts`).
+- Alle Logs müssen über `logger.info()`, `logger.error()`, `logger.warn()`, `logger.debug()` erfolgen.
+- Der Logger ist bereits im Backend eingerichtet und unterstützt pretty-printing in Development.
+
+## Code-Qualitäts-Regeln (ESLint)
+- Maximale Funktionslänge: 80 Zeilen (Warnung bei Überschreitung).
+- Maximale Komplexität: 10 (Cyclomatic Complexity).
+- Keine `console.log` Statements erlaubt (ESLint-Regel: `no-console: error`).
+- Async-Handler müssen mit `asyncHandler` Wrapper oder `void` Operator behandelt werden.
+- Alle Funktionen müssen explizite Return-Types haben (TypeScript).
 
 ## Code-Qualität
 - Nutze ESLint mit TypeScript-Regeln (z.B. @typescript-eslint/recommended).

@@ -1,4 +1,4 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router, Request, Response } from 'express';
 import { taskService } from '../services/task.service';
 import { emailService } from '../services/email.service';
 import { createTaskSchema, updateTaskSchema, taskFilterSchema } from '../models/task.model';
@@ -13,6 +13,7 @@ import {
 } from '../websocket/handlers';
 import { TaskStatus } from '@prisma/client';
 import { TaskFilterInput } from '../models/task.model';
+import { asyncHandler } from '../utils/asyncHandler';
 
 const router = Router();
 
@@ -55,17 +56,13 @@ router.use(authenticate);
 router.get(
   '/',
   validateQuery(taskFilterSchema),
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const result = await taskService.getTasks(req.query as unknown as TaskFilterInput, req.user!.userId);
-      res.status(200).json({
-        success: true,
-        data: result,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
+  asyncHandler(async (req: Request, res: Response) => {
+    const result = await taskService.getTasks(req.query as unknown as TaskFilterInput);
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  })
 );
 
 /**
@@ -91,23 +88,19 @@ router.get(
  */
 router.get(
   '/:id',
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const task = await taskService.getTaskById(req.params['id'] as string);
-      if (!task) {
-        return res.status(404).json({
-          success: false,
-          error: 'Task not found',
-        });
-      }
-      return res.status(200).json({
-        success: true,
-        data: task,
+  asyncHandler(async (req: Request, res: Response) => {
+    const task = await taskService.getTaskById(req.params['id'] as string);
+    if (!task) {
+      return res.status(404).json({
+        success: false,
+        error: 'Task not found',
       });
-    } catch (error) {
-      return next(error);
     }
-  }
+    return res.status(200).json({
+      success: true,
+      data: task,
+    });
+  })
 );
 
 /**
@@ -131,21 +124,17 @@ router.get(
 router.post(
   '/',
   validateBody(createTaskSchema),
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const task = await taskService.createTask(req.user!.userId, req.body);
+  asyncHandler(async (req: Request, res: Response) => {
+    const task = await taskService.createTask(req.user!.userId, req.body);
 
-      // Emit WebSocket event
-      emitTaskCreated(io, task);
+    // Emit WebSocket event
+    emitTaskCreated(io, task);
 
-      res.status(201).json({
-        success: true,
-        data: task,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
+    res.status(201).json({
+      success: true,
+      data: task,
+    });
+  })
 );
 
 /**
@@ -174,39 +163,35 @@ router.post(
 router.patch(
   '/:id',
   validateBody(updateTaskSchema),
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const oldTask = await taskService.getTaskById(req.params['id'] as string);
-      if (!oldTask) {
-        return res.status(404).json({
-          success: false,
-          error: 'Task not found',
-        });
-      }
-
-      const oldStatus = oldTask.status;
-      const task = await taskService.updateTask(req.params['id'] as string, req.body);
-
-      // Emit WebSocket events
-      emitTaskUpdated(io, task);
-
-      if (req.body.status && req.body.status !== oldStatus) {
-        emitTaskStatusChanged(io, task.id, oldStatus, req.body.status);
-
-        // Send email if status changed to DONE
-        if (req.body.status === TaskStatus.DONE) {
-          await emailService.sendTaskCompletionEmail(task);
-        }
-      }
-
-      return res.status(200).json({
-        success: true,
-        data: task,
+  asyncHandler(async (req: Request, res: Response) => {
+    const oldTask = await taskService.getTaskById(req.params['id'] as string);
+    if (!oldTask) {
+      return res.status(404).json({
+        success: false,
+        error: 'Task not found',
       });
-    } catch (error) {
-      return next(error);
     }
-  }
+
+    const oldStatus = oldTask.status;
+    const task = await taskService.updateTask(req.params['id'] as string, req.body);
+
+    // Emit WebSocket events
+    emitTaskUpdated(io, task);
+
+    if (req.body.status && req.body.status !== oldStatus) {
+      emitTaskStatusChanged(io, task.id, oldStatus, req.body.status);
+
+      // Send email if status changed to DONE
+      if (req.body.status === TaskStatus.DONE) {
+        await emailService.sendTaskCompletionEmail(task);
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: task,
+    });
+  })
 );
 
 /**
@@ -229,21 +214,17 @@ router.patch(
  */
 router.delete(
   '/:id',
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      await taskService.deleteTask(req.params['id'] as string);
+  asyncHandler(async (req: Request, res: Response) => {
+    await taskService.deleteTask(req.params['id'] as string);
 
-      // Emit WebSocket event
-      emitTaskDeleted(io, req.params['id'] as string);
+    // Emit WebSocket event
+    emitTaskDeleted(io, req.params['id'] as string);
 
-      res.status(200).json({
-        success: true,
-        message: 'Task deleted successfully',
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
+    res.status(200).json({
+      success: true,
+      message: 'Task deleted successfully',
+    });
+  })
 );
 
 export { router as taskRouter };
