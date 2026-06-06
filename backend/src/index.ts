@@ -13,6 +13,7 @@ import { errorHandler } from './middleware/errorHandler';
 import { setupSwagger } from './config/swagger';
 import { setupWebSocketHandlers } from './websocket/handlers';
 import { logger } from './utils/logger';
+import { logBanner } from './utils/banner';
 
 // Routes
 import { authRouter } from './routes/auth.routes';
@@ -93,10 +94,7 @@ async function startServer(): Promise<void> {
 
     // Start HTTP server
     httpServer.listen(env.PORT, () => {
-      logger.info(`🚀 Server running on port ${env.PORT}`);
-      logger.info(`📚 API Documentation: http://localhost:${env.PORT}/api-docs`);
-      logger.info('🔌 WebSocket server ready');
-      logger.info('📧 Mailpit UI: http://localhost:8025');
+      logBanner();
     });
   } catch (error) {
     logger.error({ error }, '❌ Failed to start server');
