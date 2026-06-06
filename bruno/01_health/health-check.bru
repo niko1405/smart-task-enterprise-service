@@ -14,8 +14,9 @@ tests {
   test("Status is 200", function() {
     expect(res.status).to.equal(200);
   });
-
-  test("Status is ok", function() {
-    expect(res.body.status).to.equal("ok");
+  
+  test("Server is running", function() {
+    expect(res.body.success).to.equal(true);
+    expect(res.body.message).to.equal("Server is running");
   });
 }

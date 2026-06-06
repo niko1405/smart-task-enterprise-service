@@ -24,7 +24,9 @@ tests {
   });
 
   test("Alle zurückgegebenen Tasks enthalten Tag 'backend'", function() {
-    res.body.data.data.forEach(function(task) {
+    var tasks = res.body.data && res.body.data.data;
+    expect(tasks).to.be.an("array");
+    tasks.forEach(function(task) {
       expect(task.tags).to.include("backend");
     });
   });

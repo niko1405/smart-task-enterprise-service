@@ -24,9 +24,11 @@ tests {
   });
 
   test("Ergebnisse enthalten Suchbegriff im Titel oder Beschreibung", function() {
-    res.body.data.data.forEach(function(task) {
-      var titleMatch = task.title && task.title.toLowerCase().includes("authentifizierung");
-      var descMatch = task.description && task.description.toLowerCase().includes("authentifizierung");
+    var tasks = res.body.data && res.body.data.data;
+    expect(tasks).to.be.an("array");
+    tasks.forEach(function(task) {
+      var titleMatch = task.title && task.title.toLowerCase().indexOf("authentifizierung") !== -1;
+      var descMatch = task.description && task.description.toLowerCase().indexOf("authentifizierung") !== -1;
       expect(titleMatch || descMatch).to.equal(true);
     });
   });

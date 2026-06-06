@@ -29,8 +29,7 @@ tests {
     expect(res.body.data.status).to.equal("DONE");
   });
 
-  test("Email wurde ausgelöst - Mailpit unter http://localhost:8025 prüfen", function() {
+  test("Email wurde ausgelöst (Mailpit: http://localhost:8025)", function() {
     expect(res.status).to.equal(200);
-    console.log("Prüfe Mailpit unter http://localhost:8025 auf neue Email!");
   });
 }

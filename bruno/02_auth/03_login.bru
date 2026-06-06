@@ -18,10 +18,11 @@ body:json {
 }
 
 script:post-response {
-  if (res.status === 200 && res.body.data?.token) {
+  if (res.status === 200 && res.body.data && res.body.data.token) {
     bru.setVar("token", res.body.data.token);
-    bru.setVar("userId", res.body.data.user?.id);
-    console.log("Login erfolgreich, Token aktualisiert.");
+    if (res.body.data.user) {
+      bru.setVar("userId", res.body.data.user.id);
+    }
   }
 }
 
