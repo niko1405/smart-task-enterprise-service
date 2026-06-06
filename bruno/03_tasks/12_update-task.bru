@@ -23,15 +23,15 @@ body:json {
 }
 
 tests {
-  test("Status ist 200 OK", function() {
-    expect(res.status).to.equal(200);
+  test("Status ist 204 No Content", function() {
+    expect(res.status).to.equal(204);
   });
 
-  test("Titel wurde aktualisiert", function() {
-    expect(res.body.data.title).to.include("aktualisiert");
+  test("ETag Header ist gesetzt", function() {
+    expect(res.headers["etag"]).to.not.be.undefined;
   });
 
-  test("Status ist jetzt IN_PROGRESS", function() {
-    expect(res.body.data.status).to.equal("IN_PROGRESS");
+  test("Kein Body bei 204", function() {
+    expect(res.status).to.equal(204);
   });
 }

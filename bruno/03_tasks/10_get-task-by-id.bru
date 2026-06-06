@@ -14,9 +14,19 @@ auth:bearer {
   token: {{token}}
 }
 
+script:post-response {
+  if (res.status === 200 && res.headers["etag"]) {
+    bru.setVar("etag", res.headers["etag"]);
+  }
+}
+
 tests {
   test("Status ist 200 OK", function() {
     expect(res.status).to.equal(200);
+  });
+
+  test("ETag Header ist gesetzt", function() {
+    expect(res.headers["etag"]).to.not.be.undefined;
   });
 
   test("Task-ID stimmt überein", function() {

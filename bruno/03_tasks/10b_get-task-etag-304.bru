@@ -1,0 +1,25 @@
+meta {
+  name: Task abrufen - 304 Not Modified (ETag)
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/tasks/{{taskId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  If-None-Match: {{etag}}
+}
+
+tests {
+  test("Status ist 304 Not Modified (Cache noch gültig)", function() {
+    expect(res.status).to.equal(304);
+  });
+}

@@ -214,6 +214,40 @@ describe('Task Endpoints', () => {
       expect(response.body.data.title).toBe('Single Task');
     });
 
+    it('should return ETag header', async () => {
+      const response = await request(app)
+        .get(`/api/v1/tasks/${taskId}`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.headers['etag']).toBeDefined();
+      expect(response.headers['etag']).toMatch(/^"[^"]+"$/);
+    });
+
+    it('should return 304 when If-None-Match matches ETag', async () => {
+      const first = await request(app)
+        .get(`/api/v1/tasks/${taskId}`)
+        .set('Authorization', `Bearer ${authToken}`);
+      const etag = first.headers['etag'] as string;
+
+      const second = await request(app)
+        .get(`/api/v1/tasks/${taskId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .set('If-None-Match', etag);
+
+      expect(second.status).toBe(304);
+    });
+
+    it('should return 200 when If-None-Match does not match', async () => {
+      const response = await request(app)
+        .get(`/api/v1/tasks/${taskId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .set('If-None-Match', '"stale-etag-value"');
+
+      expect(response.status).toBe(200);
+      expect(response.headers['etag']).toBeDefined();
+    });
+
     it('should return 404 for non-existent task', async () => {
       const response = await request(app)
         .get('/api/v1/tasks/non-existent-id')
@@ -240,7 +274,7 @@ describe('Task Endpoints', () => {
       taskId = task.id;
     });
 
-    it('should update task', async () => {
+    it('should update task and return 204 No Content', async () => {
       const response = await request(app)
         .patch(`/api/v1/tasks/${taskId}`)
         .set('Authorization', `Bearer ${authToken}`)
@@ -249,30 +283,55 @@ describe('Task Endpoints', () => {
           status: TaskStatus.IN_PROGRESS,
         });
 
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.title).toBe('Updated Title');
-      expect(response.body.data.status).toBe('IN_PROGRESS');
+      expect(response.status).toBe(204);
+      expect(response.headers['etag']).toBeDefined();
+      expect(response.body).toEqual({});
     });
 
-    it('should update task status to DONE', async () => {
+    it('should update task status to DONE and return 204', async () => {
       const response = await request(app)
         .patch(`/api/v1/tasks/${taskId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({ status: TaskStatus.DONE });
 
-      expect(response.status).toBe(200);
-      expect(response.body.data.status).toBe('DONE');
+      expect(response.status).toBe(204);
     });
 
-    it('should update task with dueDate', async () => {
+    it('should update task with dueDate and return 204', async () => {
       const response = await request(app)
         .patch(`/api/v1/tasks/${taskId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({ dueDate: '2025-12-31T00:00:00.000Z' });
 
-      expect(response.status).toBe(200);
-      expect(response.body.data.dueDate).toBeTruthy();
+      expect(response.status).toBe(204);
+    });
+
+    it('should return 204 with fresh ETag after update', async () => {
+      const getResponse = await request(app)
+        .get(`/api/v1/tasks/${taskId}`)
+        .set('Authorization', `Bearer ${authToken}`);
+      const originalEtag = getResponse.headers['etag'] as string;
+
+      const patchResponse = await request(app)
+        .patch(`/api/v1/tasks/${taskId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .set('If-Match', originalEtag)
+        .send({ title: 'ETag Updated Title' });
+
+      expect(patchResponse.status).toBe(204);
+      expect(patchResponse.headers['etag']).toBeDefined();
+      expect(patchResponse.headers['etag']).not.toBe(originalEtag);
+    });
+
+    it('should return 412 when If-Match does not match current ETag', async () => {
+      const response = await request(app)
+        .patch(`/api/v1/tasks/${taskId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .set('If-Match', '"stale-etag-12345"')
+        .send({ title: 'Should Fail' });
+
+      expect(response.status).toBe(412);
+      expect(response.body.success).toBe(false);
     });
 
     it('should return 404 for non-existent task', async () => {

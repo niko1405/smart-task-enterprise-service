@@ -21,15 +21,15 @@ body:json {
 }
 
 tests {
-  test("Status ist 200 OK", function() {
-    expect(res.status).to.equal(200);
+  test("Status ist 204 No Content", function() {
+    expect(res.status).to.equal(204);
   });
 
-  test("Task-Status ist DONE", function() {
-    expect(res.body.data.status).to.equal("DONE");
+  test("ETag Header ist gesetzt", function() {
+    expect(res.headers["etag"]).to.not.be.undefined;
   });
 
   test("Email wurde ausgelöst (Mailpit: http://localhost:8025)", function() {
-    expect(res.status).to.equal(200);
+    expect(res.status).to.equal(204);
   });
 }

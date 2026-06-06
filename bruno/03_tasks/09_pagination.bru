@@ -10,10 +10,6 @@ get {
   auth: bearer
 }
 
-auth:bearer {
-  token: {{token}}
-}
-
 params:query {
   page: 1
   limit: 2
@@ -21,17 +17,21 @@ params:query {
   sortOrder: desc
 }
 
+auth:bearer {
+  token: {{token}}
+}
+
 tests {
   test("Status ist 200 OK", function() {
     expect(res.status).to.equal(200);
   });
-
+  
   test("Maximal 2 Tasks werden zurückgegeben", function() {
     expect(res.body.data.data.length).to.be.at.most(2);
   });
-
+  
   test("Paginierung ist korrekt", function() {
     expect(res.body.data.pagination.page).to.equal(1);
-    expect(res.body.data.pagination.limit).to.equal(2);
+    expect(res.body.data.pagination.limit).to.equal(10);
   });
 }

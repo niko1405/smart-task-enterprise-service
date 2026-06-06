@@ -34,25 +34,30 @@ export class TaskService {
   }
 
   private buildWhereClause(filters: TaskFilterInput): Prisma.TaskWhereInput {
-    const where: Prisma.TaskWhereInput = {};
+    const conditions: Prisma.TaskWhereInput[] = [];
 
-    if (filters.status) where.status = filters.status;
-    if (filters.priority) where.priority = filters.priority;
-    if (filters.assignedToId) where.assignedToId = filters.assignedToId;
-    if (filters.createdById) where.createdById = filters.createdById;
+    if (filters.status) conditions.push({ status: filters.status });
+    if (filters.priority) conditions.push({ priority: filters.priority });
+    if (filters.assignedToId) conditions.push({ assignedToId: filters.assignedToId });
+    if (filters.createdById) conditions.push({ createdById: filters.createdById });
 
     if (filters.tags) {
-      where.tags = { hasSome: filters.tags.split(',') };
+      const tagList = filters.tags.split(',').map((t) => t.trim()).filter(Boolean);
+      if (tagList.length > 0) {
+        conditions.push({ tags: { hasSome: tagList } });
+      }
     }
 
     if (filters.search) {
-      where.OR = [
-        { title: { contains: filters.search, mode: 'insensitive' } },
-        { description: { contains: filters.search, mode: 'insensitive' } },
-      ];
+      conditions.push({
+        OR: [
+          { title: { contains: filters.search, mode: 'insensitive' } },
+          { description: { contains: filters.search, mode: 'insensitive' } },
+        ],
+      });
     }
 
-    return where;
+    return conditions.length > 0 ? { AND: conditions } : {};
   }
 
   async getTasks(filters: TaskFilterInput): Promise<{

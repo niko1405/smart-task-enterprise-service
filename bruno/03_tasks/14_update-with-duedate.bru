@@ -22,15 +22,11 @@ body:json {
 }
 
 tests {
-  test("Status ist 200 OK", function() {
-    expect(res.status).to.equal(200);
+  test("Status ist 204 No Content", function() {
+    expect(res.status).to.equal(204);
   });
 
-  test("dueDate ist gesetzt", function() {
-    expect(res.body.data.dueDate).to.not.equal(null);
-  });
-
-  test("Tags wurden aktualisiert", function() {
-    expect(res.body.data.tags).to.include("dringend");
+  test("ETag Header ist gesetzt", function() {
+    expect(res.headers["etag"]).to.not.be.undefined;
   });
 }

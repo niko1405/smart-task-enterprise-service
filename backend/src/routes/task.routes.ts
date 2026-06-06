@@ -80,9 +80,20 @@ router.get(
  *         schema:
  *           type: string
  *           format: uuid
+ *       - in: header
+ *         name: If-None-Match
+ *         schema:
+ *           type: string
+ *         description: ETag value from previous response – returns 304 if unchanged
  *     responses:
  *       200:
  *         description: Task found
+ *         headers:
+ *           ETag:
+ *             schema:
+ *               type: string
+ *       304:
+ *         description: Not Modified (cache still valid)
  *       404:
  *         description: Task not found
  */
@@ -96,6 +107,12 @@ router.get(
         error: 'Task not found',
       });
     }
+    const etag = `"${task.id}-${task.updatedAt.getTime()}"`;
+    const ifNoneMatch = req.headers['if-none-match'];
+    if (ifNoneMatch && ifNoneMatch === etag) {
+      return res.status(304).send();
+    }
+    res.setHeader('ETag', etag);
     return res.status(200).json({
       success: true,
       data: task,
@@ -151,14 +168,27 @@ router.post(
  *         required: true
  *         schema:
  *           type: string
+ *       - in: header
+ *         name: If-Match
+ *         schema:
+ *           type: string
+ *         description: ETag for optimistic locking – returns 412 if resource was modified
  *     requestBody:
  *       content:
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/Task'
  *     responses:
- *       200:
- *         description: Task updated
+ *       204:
+ *         description: Task updated (no content)
+ *         headers:
+ *           ETag:
+ *             schema:
+ *               type: string
+ *       404:
+ *         description: Task not found
+ *       412:
+ *         description: Precondition Failed – resource was modified since last fetch
  */
 router.patch(
   '/:id',
@@ -170,6 +200,17 @@ router.patch(
         success: false,
         error: 'Task not found',
       });
+    }
+
+    const ifMatch = req.headers['if-match'];
+    if (ifMatch) {
+      const currentEtag = `"${oldTask.id}-${oldTask.updatedAt.getTime()}"`;
+      if (ifMatch !== currentEtag) {
+        return res.status(412).json({
+          success: false,
+          error: 'Precondition Failed – resource was modified since last fetch',
+        });
+      }
     }
 
     const oldStatus = oldTask.status;
@@ -187,10 +228,9 @@ router.patch(
       }
     }
 
-    return res.status(200).json({
-      success: true,
-      data: task,
-    });
+    const newEtag = `"${task.id}-${task.updatedAt.getTime()}"`;
+    res.setHeader('ETag', newEtag);
+    return res.status(204).send();
   })
 );
 
