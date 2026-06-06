@@ -11,11 +11,12 @@ services:
     env_file:
       - ./backend/.env
     environment:
+      # Override .env values for Docker networking (container names as hostnames)
       - NODE_ENV=development
       - PORT=3000
-      - CORS_ORIGIN=http://localhost:5173
-    volumes:
-      - ./backend/src:/app/src
+      - DATABASE_URL=postgresql://smarttask:smarttask_secret@postgres:5432/smarttask_db?schema=public
+      - SMTP_HOST=mailpit
+      - SMTP_PORT=1025
     depends_on:
       postgres:
         condition: service_healthy
@@ -29,22 +30,7 @@ services:
       interval: 30s
       timeout: 3s
       retries: 3
-      start_period: 40s
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: smart-task-frontend
-    ports:
-      - "5173:80"
-    env_file:
-      - ./frontend/.env
-    depends_on:
-      - backend
-    networks:
-      - smart-task-network
-    restart: unless-stopped
+      start_period: 60s
 
   postgres:
     image: postgres:16-alpine

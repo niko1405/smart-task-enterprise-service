@@ -4,6 +4,7 @@
   "description": "Backend for Smart-Task Enterprise Service",
   "main": "dist/index.js",
   "scripts": {
+    "setup": "node scripts/setup-env.js",
     "dev": "ts-node src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",

@@ -27,8 +27,8 @@ jobs:
       - run: npm ci
       - run: npm run lint
 
-  test:
-    name: Test
+  type-check:
+    name: Type Check
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -41,7 +41,64 @@ jobs:
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
-      - run: npm run test:coverage
+      - run: npx tsc --noEmit
+
+  test:
+    name: Test (with DB + Mailpit)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: smarttask
+          POSTGRES_PASSWORD: smarttask_secret
+          POSTGRES_DB: smarttask_test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      mailpit:
+        image: axllent/mailpit:v1.20
+        ports:
+          - 1025:1025
+        env:
+          MP_SMTP_AUTH_ALLOW_ANY: 'true'
+
+    env:
+      NODE_ENV: test
+      PORT: 3000
+      DATABASE_URL: postgresql://smarttask:smarttask_secret@localhost:5432/smarttask_test_db?schema=public
+      JWT_SECRET: ci-test-secret-key-not-for-production
+      JWT_EXPIRES_IN: 1h
+      TEST_MODE: 'false'
+      SMTP_HOST: localhost
+      SMTP_PORT: '1025'
+      EMAIL_FROM: noreply@smarttask.local
+      CORS_ORIGIN: http://localhost:5173
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: npx prisma generate
+      - name: Push schema to test database
+        run: npx prisma db push --force-reset
+      - name: Run tests with coverage
+        run: npm run test:coverage
 
   build:
     name: Build
@@ -57,6 +114,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
+      - run: npx prisma generate
       - run: npm run build
 
   security:
@@ -74,19 +132,3 @@ jobs:
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
       - run: npm audit --audit-level=high
-
-  type-check:
-    name: Type Check
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./backend
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-      - run: npm ci
-      - run: npx tsc --noEmit
