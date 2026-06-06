@@ -5,17 +5,13 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/tasks
+  url: {{baseUrl}}/tasks?search=Authentifizierung
   body: none
   auth: bearer
 }
 
 auth:bearer {
   token: {{token}}
-}
-
-params:query {
-  search: Authentifizierung
 }
 
 tests {

@@ -5,16 +5,9 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/tasks
+  url: {{baseUrl}}/tasks?page=1&limit=2&sortBy=createdAt&sortOrder=desc
   body: none
   auth: bearer
-}
-
-params:query {
-  page: 1
-  limit: 2
-  sortBy: createdAt
-  sortOrder: desc
 }
 
 auth:bearer {
@@ -32,6 +25,6 @@ tests {
   
   test("Paginierung ist korrekt", function() {
     expect(res.body.data.pagination.page).to.equal(1);
-    expect(res.body.data.pagination.limit).to.equal(10);
+    expect(res.body.data.pagination.limit).to.equal(2);
   });
 }

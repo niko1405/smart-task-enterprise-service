@@ -5,17 +5,13 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/tasks
+  url: {{baseUrl}}/tasks?priority=HIGH
   body: none
   auth: bearer
 }
 
 auth:bearer {
   token: {{token}}
-}
-
-params:query {
-  priority: HIGH
 }
 
 tests {

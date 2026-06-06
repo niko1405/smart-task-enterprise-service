@@ -5,17 +5,13 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/tasks
+  url: {{baseUrl}}/tasks?tags=backend
   body: none
   auth: bearer
 }
 
 auth:bearer {
   token: {{token}}
-}
-
-params:query {
-  tags: backend
 }
 
 tests {

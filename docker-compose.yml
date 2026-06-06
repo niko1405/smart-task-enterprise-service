@@ -17,7 +17,7 @@ services:
       - DATABASE_URL=postgresql://smarttask:smarttask_secret@postgres:5432/smarttask_db?schema=public
       - SMTP_HOST=mailpit
       - SMTP_PORT=1025
-      - TEST_MODE=false
+      # TEST_MODE is controlled via backend/.env (true = wipe & seed DB on startup)
     depends_on:
       postgres:
         condition: service_healthy
