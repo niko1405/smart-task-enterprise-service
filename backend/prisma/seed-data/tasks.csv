@@ -1,6 +1,6 @@
 title,description,status,priority,dueDate,tags,assignedToEmail,createdByEmail
 Implement user authentication,Setup JWT-based authentication with login and register endpoints,DONE,HIGH,2024-12-20,"auth,jwt,backend",john.doe@example.com,admin@smarttask.com
-Create database schema,Design and implement PostgreSQL schema with Prisma,MEDIUM,2024-12-22,"database,prisma,schema",jane.smith@example.com,admin@smarttask.com
+Create database schema,Design and implement PostgreSQL schema with Prisma,IN_PROGRESS,MEDIUM,2024-12-22,"database,prisma,schema",jane.smith@example.com,admin@smarttask.com
 Add email notifications,Integrate nodemailer for sending task status updates,IN_PROGRESS,HIGH,2024-12-25,"email,notifications,integration",bob.wilson@example.com,john.doe@example.com
 Frontend dashboard design,Create responsive dashboard with task list view,TODO,MEDIUM,2024-12-28,"frontend,ui,design",john.doe@example.com,jane.smith@example.com
 WebSocket real-time sync,Implement Socket.io for live task updates,TODO,HIGH,2024-12-30,"websocket,realtime,socket.io",jane.smith@example.com,admin@smarttask.com
