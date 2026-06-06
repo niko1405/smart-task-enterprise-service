@@ -98,7 +98,7 @@ export async function seedDatabase(): Promise<void> {
 }
 
 async function readUsersCSV(): Promise<UserCSVRow[]> {
-  const csvPath = path.join(__dirname, '../../prisma/seed-data/users.csv');
+  const csvPath = path.join(process.cwd(), 'prisma/seed-data/users.csv');
   const fileContent = fs.readFileSync(csvPath, 'utf-8');
 
   return new Promise((resolve, reject) => {
@@ -122,7 +122,7 @@ async function readUsersCSV(): Promise<UserCSVRow[]> {
 }
 
 async function readTasksCSV(): Promise<TaskCSVRow[]> {
-  const csvPath = path.join(__dirname, '../../prisma/seed-data/tasks.csv');
+  const csvPath = path.join(process.cwd(), 'prisma/seed-data/tasks.csv');
   const fileContent = fs.readFileSync(csvPath, 'utf-8');
 
   return new Promise((resolve, reject) => {
