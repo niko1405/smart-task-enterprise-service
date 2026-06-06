@@ -1,0 +1,25 @@
+meta {
+  name: Task löschen
+  type: http
+  seq: 15
+}
+
+delete {
+  url: {{baseUrl}}/tasks/{{taskId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("Status ist 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("success ist true", function() {
+    expect(res.body.success).to.equal(true);
+  });
+}

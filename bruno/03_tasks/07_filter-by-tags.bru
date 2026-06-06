@@ -1,0 +1,31 @@
+meta {
+  name: Tasks filtern nach Tags (backend)
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/tasks
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:query {
+  tags: backend
+}
+
+tests {
+  test("Status ist 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Alle zurückgegebenen Tasks enthalten Tag 'backend'", function() {
+    res.body.data.data.forEach(function(task) {
+      expect(task.tags).to.include("backend");
+    });
+  });
+}

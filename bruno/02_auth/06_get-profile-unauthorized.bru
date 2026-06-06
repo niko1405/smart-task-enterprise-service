@@ -1,0 +1,21 @@
+meta {
+  name: Profil ohne Token (401)
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/auth/me
+  body: none
+  auth: none
+}
+
+tests {
+  test("Status ist 401 Unauthorized", function() {
+    expect(res.status).to.equal(401);
+  });
+
+  test("success ist false", function() {
+    expect(res.body.success).to.equal(false);
+  });
+}

@@ -1,0 +1,33 @@
+meta {
+  name: Alle Tasks abrufen
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/tasks
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("Status ist 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Paginierung vorhanden", function() {
+    var pagination = res.body.data.pagination;
+    expect(pagination).to.have.property("page");
+    expect(pagination).to.have.property("limit");
+    expect(pagination).to.have.property("total");
+    expect(pagination).to.have.property("totalPages");
+  });
+
+  test("data ist ein Array", function() {
+    expect(res.body.data.data).to.be.an("array");
+  });
+}

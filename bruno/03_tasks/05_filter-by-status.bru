@@ -1,0 +1,31 @@
+meta {
+  name: Tasks filtern nach Status (TODO)
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/tasks
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:query {
+  status: TODO
+}
+
+tests {
+  test("Status ist 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Alle zurückgegebenen Tasks haben Status TODO", function() {
+    res.body.data.data.forEach(function(task) {
+      expect(task.status).to.equal("TODO");
+    });
+  });
+}

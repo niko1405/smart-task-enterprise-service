@@ -1,0 +1,36 @@
+meta {
+  name: Task mit Fälligkeitsdatum aktualisieren
+  type: http
+  seq: 14
+}
+
+patch {
+  url: {{baseUrl}}/tasks/{{taskId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "dueDate": "2025-06-30T23:59:59.000Z",
+    "tags": ["backend", "auth", "security", "dringend"]
+  }
+}
+
+tests {
+  test("Status ist 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("dueDate ist gesetzt", function() {
+    expect(res.body.data.dueDate).to.not.equal(null);
+  });
+
+  test("Tags wurden aktualisiert", function() {
+    expect(res.body.data.tags).to.include("dringend");
+  });
+}

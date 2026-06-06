@@ -1,0 +1,36 @@
+meta {
+  name: Task abschliessen (DONE - löst Email aus!)
+  type: http
+  seq: 13
+}
+
+patch {
+  url: {{baseUrl}}/tasks/{{taskId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "status": "DONE"
+  }
+}
+
+tests {
+  test("Status ist 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Task-Status ist DONE", function() {
+    expect(res.body.data.status).to.equal("DONE");
+  });
+
+  test("Email wurde ausgelöst - Mailpit unter http://localhost:8025 prüfen", function() {
+    expect(res.status).to.equal(200);
+    console.log("Prüfe Mailpit unter http://localhost:8025 auf neue Email!");
+  });
+}

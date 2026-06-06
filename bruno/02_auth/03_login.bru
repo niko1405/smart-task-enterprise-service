@@ -1,0 +1,41 @@
+meta {
+  name: Login
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "demo@smarttask.dev",
+    "password": "SecurePass123!"
+  }
+}
+
+script:post-response {
+  if (res.status === 200 && res.body.data?.token) {
+    bru.setVar("token", res.body.data.token);
+    bru.setVar("userId", res.body.data.user?.id);
+    console.log("Login erfolgreich, Token aktualisiert.");
+  }
+}
+
+tests {
+  test("Status ist 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Token ist vorhanden", function() {
+    expect(res.body.data).to.have.property("token");
+  });
+
+  test("User-Daten sind korrekt", function() {
+    expect(res.body.data.user.email).to.equal("demo@smarttask.dev");
+    expect(res.body.data.user.name).to.equal("Demo User");
+  });
+}

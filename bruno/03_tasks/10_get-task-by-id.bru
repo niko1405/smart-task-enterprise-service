@@ -1,0 +1,35 @@
+meta {
+  name: Task per ID abrufen
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/tasks/{{taskId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("Status ist 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Task-ID stimmt überein", function() {
+    expect(res.body.data.id).to.equal(bru.getVar("taskId"));
+  });
+
+  test("Alle Felder vorhanden", function() {
+    var task = res.body.data;
+    expect(task).to.have.property("id");
+    expect(task).to.have.property("title");
+    expect(task).to.have.property("status");
+    expect(task).to.have.property("priority");
+    expect(task).to.have.property("createdBy");
+    expect(task).to.have.property("createdAt");
+  });
+}

@@ -1,0 +1,32 @@
+meta {
+  name: Eigenes Profil abrufen
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/auth/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("Status ist 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("User-Daten vorhanden", function() {
+    expect(res.body.data).to.have.property("id");
+    expect(res.body.data).to.have.property("email");
+    expect(res.body.data).to.have.property("name");
+    expect(res.body.data).to.have.property("role");
+  });
+
+  test("Kein Passwort in der Response", function() {
+    expect(res.body.data).to.not.have.property("password");
+  });
+}

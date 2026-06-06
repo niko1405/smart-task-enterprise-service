@@ -1,0 +1,29 @@
+meta {
+  name: Register - Duplicate Email (409)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "demo@smarttask.dev",
+    "password": "SecurePass123!",
+    "name": "Demo User"
+  }
+}
+
+tests {
+  test("Status ist 409 Conflict", function() {
+    expect(res.status).to.equal(409);
+  });
+
+  test("success ist false", function() {
+    expect(res.body.success).to.equal(false);
+  });
+}

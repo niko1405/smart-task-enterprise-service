@@ -1,0 +1,33 @@
+meta {
+  name: Tasks durchsuchen (Volltextsuche)
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/tasks
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:query {
+  search: Authentifizierung
+}
+
+tests {
+  test("Status ist 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Ergebnisse enthalten Suchbegriff im Titel oder Beschreibung", function() {
+    res.body.data.data.forEach(function(task) {
+      var titleMatch = task.title && task.title.toLowerCase().includes("authentifizierung");
+      var descMatch = task.description && task.description.toLowerCase().includes("authentifizierung");
+      expect(titleMatch || descMatch).to.equal(true);
+    });
+  });
+}

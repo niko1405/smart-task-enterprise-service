@@ -1,0 +1,32 @@
+meta {
+  name: Task erstellen - Validierungsfehler (400)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/tasks
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "title": "",
+    "priority": "UNGÜLTIG"
+  }
+}
+
+tests {
+  test("Status ist 400 Bad Request", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("success ist false", function() {
+    expect(res.body.success).to.equal(false);
+  });
+}

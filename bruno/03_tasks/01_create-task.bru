@@ -1,0 +1,56 @@
+meta {
+  name: Task erstellen
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/tasks
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "title": "Backend-API für Authentifizierung implementieren",
+    "description": "JWT-basierte Authentifizierung mit Refresh-Tokens und Logout-Endpoint implementieren",
+    "priority": "HIGH",
+    "status": "TODO",
+    "dueDate": "2025-12-31T00:00:00.000Z",
+    "tags": ["backend", "auth", "security"]
+  }
+}
+
+script:post-response {
+  if (res.status === 201 && res.body.data?.id) {
+    bru.setVar("taskId", res.body.data.id);
+    console.log("Task ID gespeichert:", res.body.data.id);
+  }
+}
+
+tests {
+  test("Status ist 201 Created", function() {
+    expect(res.status).to.equal(201);
+  });
+
+  test("success ist true", function() {
+    expect(res.body.success).to.equal(true);
+  });
+
+  test("Task-Daten vollständig", function() {
+    var task = res.body.data;
+    expect(task).to.have.property("id");
+    expect(task.title).to.equal("Backend-API für Authentifizierung implementieren");
+    expect(task.priority).to.equal("HIGH");
+    expect(task.status).to.equal("TODO");
+    expect(task.tags).to.include("backend");
+  });
+
+  test("createdBy ist gesetzt", function() {
+    expect(res.body.data.createdBy).to.have.property("email");
+  });
+}

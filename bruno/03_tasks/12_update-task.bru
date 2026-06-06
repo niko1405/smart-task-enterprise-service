@@ -1,0 +1,37 @@
+meta {
+  name: Task aktualisieren (Titel + Status)
+  type: http
+  seq: 12
+}
+
+patch {
+  url: {{baseUrl}}/tasks/{{taskId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "title": "Backend-API für Authentifizierung implementieren (aktualisiert)",
+    "status": "IN_PROGRESS",
+    "priority": "HIGH"
+  }
+}
+
+tests {
+  test("Status ist 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Titel wurde aktualisiert", function() {
+    expect(res.body.data.title).to.include("aktualisiert");
+  });
+
+  test("Status ist jetzt IN_PROGRESS", function() {
+    expect(res.body.data.status).to.equal("IN_PROGRESS");
+  });
+}
