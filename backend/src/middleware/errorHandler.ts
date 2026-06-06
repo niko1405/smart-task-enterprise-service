@@ -40,6 +40,9 @@ export const errorHandler = (
     if (prismaErr.code === 'P2025') {
       statusCode = 404;
       message = 'Record not found';
+    } else if (prismaErr.code === 'P2003') {
+      statusCode = 409;
+      message = 'Referenced resource does not exist';
     } else {
       statusCode = 400;
       message = 'Database operation failed';

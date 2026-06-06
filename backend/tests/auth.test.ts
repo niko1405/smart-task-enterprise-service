@@ -208,7 +208,7 @@ describe('Auth Endpoints', () => {
         .get('/api/v1/auth/me')
         .set('Authorization', `Bearer ${ghostToken}`);
 
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
     });
   });
