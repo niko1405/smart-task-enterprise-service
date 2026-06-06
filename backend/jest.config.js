@@ -24,7 +24,7 @@ module.exports = {
     },
   },
   // Load env vars BEFORE setup files
-  setupFiles: ['dotenv/config'],
+  setupFiles: ['<rootDir>/tests/jest-env-setup.js'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',

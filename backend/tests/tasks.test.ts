@@ -5,6 +5,7 @@ import { prisma } from '../src/config/database';
 import jwt from 'jsonwebtoken';
 import { env } from '../src/config/env';
 import { Priority, Role, TaskStatus } from '@prisma/client';
+import { taskService } from '../src/services/task.service';
 
 describe('Task Endpoints', () => {
   let authToken: string;
@@ -323,6 +324,29 @@ describe('Task Endpoints', () => {
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
+    });
+  });
+
+  describe('TaskService.getTaskStatus (direct)', () => {
+    it('should return status for existing task', async () => {
+      const task = await prisma.task.create({
+        data: {
+          title: 'Status Task',
+          status: TaskStatus.IN_PROGRESS,
+          priority: Priority.HIGH,
+          createdById: userId,
+        },
+      });
+
+      const status = await taskService.getTaskStatus(task.id);
+
+      expect(status).toBe(TaskStatus.IN_PROGRESS);
+    });
+
+    it('should return null for non-existent task id', async () => {
+      const status = await taskService.getTaskStatus('00000000-0000-0000-0000-000000000000');
+
+      expect(status).toBeNull();
     });
   });
 });

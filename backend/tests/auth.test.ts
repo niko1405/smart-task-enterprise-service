@@ -188,5 +188,28 @@ describe('Auth Endpoints', () => {
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
     });
+
+    it('should return 404 when user no longer exists in DB', async () => {
+      const tempUser = await prisma.user.create({
+        data: {
+          email: 'ghost@example.com',
+          password: await bcrypt.hash('password123', 12),
+          name: 'Ghost User',
+          role: 'USER',
+        },
+      });
+      const ghostToken = jwt.sign(
+        { userId: tempUser.id, email: tempUser.email, role: tempUser.role },
+        env.JWT_SECRET
+      );
+      await prisma.user.delete({ where: { id: tempUser.id } });
+
+      const response = await request(app)
+        .get('/api/v1/auth/me')
+        .set('Authorization', `Bearer ${ghostToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+    });
   });
 });
