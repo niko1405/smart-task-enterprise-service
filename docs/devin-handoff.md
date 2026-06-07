@@ -1,7 +1,7 @@
 # Devin Handoff Document - Smart Task Enterprise Service
 
-**Date:** 2026-05-30  
-**Backend Status:** ✅ Complete (Phases 1-7)  
+**Date:** 2026-06-07  
+**Backend Status:** ✅ Complete (Phases 1-7) + API-Improvements  
 **API Base URL:** `http://localhost:3000/api/v1`
 
 ---
@@ -128,6 +128,30 @@ Create a new task.
 }
 ```
 
+#### GET /api/v1/tasks/:id
+Get a single task by ID.
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": { /* Task object */ }
+}
+```
+
+**Headers returned:**
+```
+ETag: "<task-id>-<updatedAt-timestamp>"
+```
+
+**Conditional GET** — send `If-None-Match` to avoid re-fetching unchanged data:
+```
+If-None-Match: "<etag-from-previous-response>"
+```
+→ Returns **304 Not Modified** (no body) if task hasn't changed.
+
+---
+
 #### PATCH /api/v1/tasks/:id
 Update a task.
 
@@ -140,7 +164,16 @@ Update a task.
 }
 ```
 
-**Note:** When status changes to "DONE", an email notification is automatically sent.
+**Response: `204 No Content`** — no body, but `ETag` header of the updated task is set.
+
+**Optimistic Locking** — send `If-Match` to prevent lost updates:
+```
+If-Match: "<etag-from-get-response>"
+```
+→ Returns **412 Precondition Failed** if task was modified by someone else since last fetch.
+→ Omitting `If-Match` performs the update unconditionally (backwards-compatible).
+
+**Note:** When status changes to `DONE`, an email notification is automatically sent.
 
 #### DELETE /api/v1/tasks/:id
 Delete a task.
@@ -152,6 +185,26 @@ Delete a task.
   "message": "Task deleted successfully"
 }
 ```
+
+---
+
+## 🔐 Authentication Notes
+
+- JWT tokens expire after **7 days** (`JWT_EXPIRES_IN=7d`)
+- If a token references a deleted user, the API returns **401** `"User no longer exists. Please log in again."`
+- Always re-login after a DB reset (e.g. TEST_MODE seed)
+
+### Error Codes Reference
+
+| HTTP Code | Situation |
+|---|---|
+| 400 | Validation failed (Zod) or invalid DB operation |
+| 401 | Missing/invalid token or deleted user |
+| 403 | Valid token but insufficient role |
+| 404 | Resource not found |
+| 409 | Conflict — referenced resource does not exist (FK violation) |
+| 412 | Precondition Failed — ETag mismatch (If-Match header) |
+| 429 | Rate limit exceeded |
 
 ---
 
@@ -184,15 +237,37 @@ interface Task {
   description: string | null;
   status: 'TODO' | 'IN_PROGRESS' | 'DONE';
   priority: 'LOW' | 'MEDIUM' | 'HIGH';
-  dueDate: string | null;  // ISO date
+  dueDate: string | null;          // ISO date string
   tags: string[];
   createdById: string;
   assignedToId: string | null;
   createdBy: { id: string; email: string; name: string };
   assignedTo: { id: string; email: string; name: string } | null;
-  createdAt: string;  // ISO date
-  updatedAt: string;  // ISO date
+  createdAt: string;               // ISO date string
+  updatedAt: string;               // ISO date string — used for ETag calculation
 }
+
+// ETag format (returned in response header, not in body):
+// ETag: "<task.id>-<task.updatedAt.getTime()>"
+// Example: "abc123-1749254400000"
+```
+
+### PATCH Workflow (with Optimistic Locking)
+
+```typescript
+// 1. Fetch task and store ETag
+const res = await fetch(`/api/v1/tasks/${id}`, { headers: { Authorization } });
+const etag = res.headers.get('ETag');
+const task = await res.json();
+
+// 2. Update with If-Match to prevent lost updates
+const patch = await fetch(`/api/v1/tasks/${id}`, {
+  method: 'PATCH',
+  headers: { Authorization, 'If-Match': etag, 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status: 'DONE' }),
+});
+// 204 → success, new ETag in patch.headers.get('ETag')
+// 412 → conflict, re-fetch task and retry
 ```
 
 ---
@@ -274,11 +349,16 @@ cd /home/u7411/CascadeProjects/smart-task-enterprise-service
 docker-compose up -d
 ```
 
-**Database not seeded?**
+**Database not seeded / reset needed?**
 ```bash
-cd backend
-TEST_MODE=true npm run dev
+# 1. Set TEST_MODE=true in backend/.env
+# 2. Restart container (no rebuild needed):
+docker compose up -d backend
+# 3. After seeding, set TEST_MODE=false and restart again
 ```
+
+**Token invalid after DB reset?**
+Log in again — old tokens reference deleted user IDs and return 401.
 
 **Need to see API docs?**
 Visit http://localhost:3000/api-docs after starting the backend.
