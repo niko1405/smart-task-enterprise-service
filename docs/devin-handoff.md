@@ -373,6 +373,17 @@ npm run dev
 
 **Frontend runs on:** http://localhost:5173
 
+### UI/Styling Requirements
+
+- **Tailwind CSS** is mandatory for all styling — no plain CSS, no CSS Modules, no styled-components
+- Use a **modern, professional design**: clean typography, consistent spacing, subtle shadows, smooth transitions
+- Recommended companion libraries (all Tailwind-compatible):
+  - `shadcn/ui` or `Headless UI` for accessible components (Dialog, Dropdown, etc.)
+  - `Lucide React` for icons
+  - `clsx` / `tailwind-merge` for conditional class composition
+- Responsive layout: sidebar/dashboard pattern on desktop, stacked on mobile
+- Dark/light mode is a bonus but not required
+
 ---
 
 ## 📧 Mailpit (Email Testing)
@@ -404,16 +415,33 @@ Test scenarios:
 
 ## ✅ Acceptance Criteria
 
+### Core Features
 - [ ] Login/Register pages functional
-- [ ] Task dashboard with list view
+- [ ] Task dashboard with list view (incl. comment badge `_count.comments`)
 - [ ] Task creation form with validation
 - [ ] Task editing with status updates
-- [ ] Real-time updates via WebSocket
+- [ ] Real-time task updates via WebSocket
 - [ ] Responsive design (mobile + desktop)
-- [ ] Loading states for async operations
-- [ ] Error handling for API errors
+- [ ] Loading states for all async operations
+- [ ] Error handling with user-friendly messages for all API errors
+
+### Comment Feature (required)
+- [ ] Each task has a **comment section** — accessible from the task detail view
+- [ ] Comments are displayed in chronological order (oldest first), with author name and timestamp
+- [ ] Users can **create** a new comment (text input + submit button)
+- [ ] Users can **delete their own comments** (delete button visible only on own comments)
+- [ ] **ADMIN role** can delete **any** comment regardless of author
+- [ ] The role distinction must be **visually indicated**: e.g. an ADMIN badge next to the author name in the comment, or a visible delete icon on all comments only for admins
+- [ ] New comments appear in **real-time** without page reload (WebSocket event `task:comment:added`)
+- [ ] Deleted comments disappear in **real-time** (WebSocket event `task:comment:deleted`)
+- [ ] Socket room join/leave is handled correctly: emit `task:join` when opening task detail, `task:leave` when closing
+- [ ] Cursor-based pagination for older comments (`nextCursor` → load-more button)
+
+### UI Quality (required)
+- [ ] **Tailwind CSS** used for all styling
+- [ ] Modern, professional look: clean typography, consistent spacing, subtle shadows
 - [ ] Component test coverage ≥70%
-- [ ] E2E tests stable
+- [ ] E2E tests stable (incl. comment create + delete flows)
 
 ---
 
