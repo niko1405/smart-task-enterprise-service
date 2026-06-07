@@ -1,0 +1,55 @@
+meta {
+  name: Kommentar erstellen
+  type: http
+  seq: 18
+}
+
+post {
+  url: {{baseUrl}}/tasks/{{taskId}}/comments
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "content": "This is a test comment from Bruno!"
+  }
+}
+
+script:post-response {
+  if (res.status === 201 && res.body.data && res.body.data.id) {
+    bru.setVar("commentId", res.body.data.id);
+  }
+}
+
+tests {
+  test("Status ist 201 Created", function() {
+    expect(res.status).to.equal(201);
+  });
+
+  test("Response hat success-Flag", function() {
+    expect(res.body.success).to.equal(true);
+  });
+
+  test("Kommentar-ID wird gesetzt", function() {
+    expect(res.body.data.id).to.not.be.undefined;
+  });
+
+  test("Content stimmt überein", function() {
+    expect(res.body.data.content).to.equal("This is a test comment from Bruno!");
+  });
+
+  test("taskId stimmt überein", function() {
+    expect(res.body.data.taskId).to.equal(bru.getVar("taskId"));
+  });
+
+  test("Author-Objekt vorhanden", function() {
+    expect(res.body.data.author).to.have.property("id");
+    expect(res.body.data.author).to.have.property("name");
+    expect(res.body.data.author).to.have.property("email");
+  });
+}

@@ -1,0 +1,29 @@
+meta {
+  name: Kommentar löschen
+  type: http
+  seq: 19
+}
+
+delete {
+  url: {{baseUrl}}/tasks/{{taskId}}/comments/{{commentId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("Status ist 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Response hat success-Flag", function() {
+    expect(res.body.success).to.equal(true);
+  });
+
+  test("Erfolgsmeldung vorhanden", function() {
+    expect(res.body.message).to.equal("Comment deleted successfully");
+  });
+}

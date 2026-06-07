@@ -1,0 +1,45 @@
+meta {
+  name: Kommentare abrufen
+  type: http
+  seq: 17
+}
+
+get {
+  url: {{baseUrl}}/tasks/{{taskId}}/comments?limit=20
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("Status ist 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Response hat success-Flag", function() {
+    expect(res.body.success).to.equal(true);
+  });
+
+  test("Pagination-Objekt vorhanden", function() {
+    expect(res.body.data).to.have.property("data");
+    expect(res.body.data).to.have.property("nextCursor");
+    expect(Array.isArray(res.body.data.data)).to.equal(true);
+  });
+
+  test("Kommentare haben korrekte Felder", function() {
+    var comments = res.body.data.data;
+    if (comments.length > 0) {
+      var c = comments[0];
+      expect(c).to.have.property("id");
+      expect(c).to.have.property("content");
+      expect(c).to.have.property("taskId");
+      expect(c).to.have.property("authorId");
+      expect(c).to.have.property("author");
+      expect(c).to.have.property("createdAt");
+      expect(c.author).to.have.property("name");
+    }
+  });
+}
