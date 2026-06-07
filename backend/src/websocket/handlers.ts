@@ -39,6 +39,20 @@ export function setupWebSocketHandlers(io: Server): void {
       void socket.join(`user:${socket.userId}`);
     }
 
+    // Task room: join when client opens task detail view
+    socket.on('task:join', (taskId: string) => {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      void socket.join(`task:${taskId}`);
+      logger.debug(`🚪 Socket ${socket.id} joined task room: ${taskId}`);
+    });
+
+    // Task room: leave when client closes task detail view
+    socket.on('task:leave', (taskId: string) => {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      void socket.leave(`task:${taskId}`);
+      logger.debug(`🚪 Socket ${socket.id} left task room: ${taskId}`);
+    });
+
     // Handle disconnect
     socket.on('disconnect', () => {
       logger.info(`🔌 Client disconnected: ${socket.id}`);
@@ -66,6 +80,14 @@ export function emitTaskStatusChanged(
 
 export function emitTaskDeleted(io: Server, taskId: string): void {
   io.emit('task:deleted', { taskId });
+}
+
+export function emitCommentAdded(io: Server, taskId: string, comment: unknown): void {
+  io.to(`task:${taskId}`).emit('task:comment:added', { comment });
+}
+
+export function emitCommentDeleted(io: Server, taskId: string, commentId: string): void {
+  io.to(`task:${taskId}`).emit('task:comment:deleted', { commentId });
 }
 
 export function emitToUser(

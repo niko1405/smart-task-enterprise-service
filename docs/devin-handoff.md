@@ -188,6 +188,61 @@ Delete a task.
 
 ---
 
+### Comment Endpoints
+
+All comment endpoints require: `Authorization: Bearer <token>`
+
+#### GET /api/v1/tasks/:id/comments
+Fetch comments for a task — cursor-based pagination, oldest first.
+
+**Query Parameters:**
+- `limit` — number of comments to return (default: 20)
+- `cursor` — comment UUID to paginate from (exclusive)
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "data": [
+      {
+        "id": "uuid",
+        "content": "Great progress!",
+        "taskId": "uuid",
+        "authorId": "uuid",
+        "author": { "id": "uuid", "email": "user@example.com", "name": "John Doe" },
+        "createdAt": "2026-06-07T13:00:00.000Z"
+      }
+    ],
+    "nextCursor": "uuid-or-null"
+  }
+}
+```
+
+#### POST /api/v1/tasks/:id/comments
+Add a comment to a task.
+
+**Request Body:**
+```json
+{ "content": "This is a comment" }
+```
+
+**Response (201):** Created comment object (same shape as above).
+
+**WebSocket:** Emits `task:comment:added` to all clients in the task room.
+
+#### DELETE /api/v1/tasks/:id/comments/:commentId
+Delete a comment. Allowed for: **author** or **ADMIN** role.
+
+**Response (200):**
+```json
+{ "success": true, "message": "Comment deleted successfully" }
+```
+
+**WebSocket:** Emits `task:comment:deleted` to all clients in the task room.
+
+---
+
 ## 🔐 Authentication Notes
 
 - JWT tokens expire after **7 days** (`JWT_EXPIRES_IN=7d`)
@@ -227,6 +282,25 @@ const socket = io('ws://localhost:3000', {
 | `task:updated` | `{ task: Task }` | Task updated |
 | `task:statusChanged` | `{ taskId, oldStatus, newStatus }` | Status changed |
 | `task:deleted` | `{ taskId }` | Task deleted |
+| `task:comment:added` | `{ comment: Comment }` | New comment posted (task room only) |
+| `task:comment:deleted` | `{ commentId }` | Comment deleted (task room only) |
+
+### Events (Client sends)
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `task:join` | `taskId: string` | Join task room to receive comment events |
+| `task:leave` | `taskId: string` | Leave task room |
+
+```javascript
+// When user opens task detail view:
+socket.emit('task:join', taskId);
+socket.on('task:comment:added', ({ comment }) => { /* append to list */ });
+socket.on('task:comment:deleted', ({ commentId }) => { /* remove from list */ });
+
+// When user closes task detail view:
+socket.emit('task:leave', taskId);
+```
 
 ### TypeScript Types
 
@@ -245,6 +319,16 @@ interface Task {
   assignedTo: { id: string; email: string; name: string } | null;
   createdAt: string;               // ISO date string
   updatedAt: string;               // ISO date string — used for ETag calculation
+  _count: { comments: number };   // comment badge count (no content loaded)
+}
+
+interface Comment {
+  id: string;
+  content: string;
+  taskId: string;
+  authorId: string;
+  author: { id: string; email: string; name: string };
+  createdAt: string;               // ISO date string
 }
 
 // ETag format (returned in response header, not in body):

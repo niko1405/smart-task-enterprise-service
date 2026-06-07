@@ -18,6 +18,7 @@ import { logBanner } from './utils/banner';
 // Routes
 import { authRouter } from './routes/auth.routes';
 import { taskRouter } from './routes/task.routes';
+import { commentRouter } from './routes/comment.routes';
 
 const app: Application = express();
 const httpServer = createServer(app);
@@ -65,6 +66,7 @@ app.get('/health', (_req: Request, res: Response) => {
 // API Routes
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/tasks', taskRouter);
+app.use('/api/v1/tasks/:id/comments', commentRouter);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

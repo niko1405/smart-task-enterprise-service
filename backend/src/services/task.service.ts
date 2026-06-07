@@ -6,6 +6,7 @@ type TaskWithAssociations = Prisma.TaskGetPayload<{
   include: {
     createdBy: { select: { id: true; email: true; name: true } };
     assignedTo: { select: { id: true; email: true; name: true } };
+    _count: { select: { comments: true } };
   };
 }>;
 
@@ -29,6 +30,7 @@ export class TaskService {
         assignedTo: {
           select: { id: true, email: true, name: true },
         },
+        _count: { select: { comments: true } },
       },
     });
   }
@@ -75,6 +77,7 @@ export class TaskService {
         include: {
           createdBy: { select: { id: true, email: true, name: true } },
           assignedTo: { select: { id: true, email: true, name: true } },
+          _count: { select: { comments: true } },
         },
         orderBy: { [filters.sortBy]: filters.sortOrder },
         skip,
@@ -99,6 +102,7 @@ export class TaskService {
         assignedTo: {
           select: { id: true, email: true, name: true },
         },
+        _count: { select: { comments: true } },
       },
     });
   }
@@ -126,6 +130,7 @@ export class TaskService {
         assignedTo: {
           select: { id: true, email: true, name: true },
         },
+        _count: { select: { comments: true } },
       },
     });
   }
