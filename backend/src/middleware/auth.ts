@@ -29,7 +29,10 @@ const performAuthentication = async (
     const token = authHeader.substring(7);
     const decoded = jwt.verify(token, env.JWT_SECRET) as UserPayload;
 
-    const user = await prisma.user.findUnique({ where: { id: decoded.userId }, select: { id: true } });
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { id: true, email: true, role: true },
+    });
     if (!user) {
       res.status(401).json({
         success: false,
@@ -38,7 +41,7 @@ const performAuthentication = async (
       return;
     }
 
-    req.user = decoded;
+    req.user = { userId: user.id, email: user.email, role: user.role };
     next();
   } catch (error) {
     res.status(401).json({
