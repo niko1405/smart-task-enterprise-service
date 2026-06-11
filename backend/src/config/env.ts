@@ -16,6 +16,7 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASSWORD: z.string().optional(),
   EMAIL_FROM: z.string().default('noreply@smarttask.local'),
+  APP_URL: z.string().default('http://localhost:5173'),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

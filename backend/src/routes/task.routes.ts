@@ -1,19 +1,10 @@
-import { Router, Request, Response } from 'express';
-import { taskService } from '../services/task.service';
-import { emailService } from '../services/email.service';
+import { Router } from 'express';
 import { createTaskSchema, updateTaskSchema, taskFilterSchema } from '../models/task.model';
 import { validateBody, validateQuery } from '../middleware/validate';
 import { authenticate } from '../middleware/auth';
-import { io } from '../index';
-import {
-  emitTaskCreated,
-  emitTaskUpdated,
-  emitTaskStatusChanged,
-  emitTaskDeleted,
-} from '../websocket/handlers';
-import { TaskStatus } from '@prisma/client';
-import { TaskFilterInput } from '../models/task.model';
+import { requireTaskOwnershipHandler } from '../middleware/ownership';
 import { asyncHandler } from '../utils/asyncHandler';
+import * as taskController from '../controllers/task.controller';
 
 const router = Router();
 
@@ -53,17 +44,7 @@ router.use(authenticate);
  *       200:
  *         description: List of tasks
  */
-router.get(
-  '/',
-  validateQuery(taskFilterSchema),
-  asyncHandler(async (req: Request, res: Response) => {
-    const result = await taskService.getTasks(req.query as unknown as TaskFilterInput);
-    res.status(200).json({
-      success: true,
-      data: result,
-    });
-  })
-);
+router.get('/', validateQuery(taskFilterSchema), asyncHandler(taskController.listTasks));
 
 /**
  * @swagger
@@ -97,28 +78,7 @@ router.get(
  *       404:
  *         description: Task not found
  */
-router.get(
-  '/:id',
-  asyncHandler(async (req: Request, res: Response) => {
-    const task = await taskService.getTaskById(req.params['id'] as string);
-    if (!task) {
-      return res.status(404).json({
-        success: false,
-        error: 'Task not found',
-      });
-    }
-    const etag = `"${task.id}-${task.updatedAt.getTime()}"`;
-    const ifNoneMatch = req.headers['if-none-match'];
-    if (ifNoneMatch && ifNoneMatch === etag) {
-      return res.status(304).send();
-    }
-    res.setHeader('ETag', etag);
-    return res.status(200).json({
-      success: true,
-      data: task,
-    });
-  })
-);
+router.get('/:id', asyncHandler(taskController.getTask));
 
 /**
  * @swagger
@@ -138,21 +98,7 @@ router.get(
  *       201:
  *         description: Task created
  */
-router.post(
-  '/',
-  validateBody(createTaskSchema),
-  asyncHandler(async (req: Request, res: Response) => {
-    const task = await taskService.createTask(req.user!.userId, req.body);
-
-    // Emit WebSocket event
-    emitTaskCreated(io, task);
-
-    res.status(201).json({
-      success: true,
-      data: task,
-    });
-  })
-);
+router.post('/', validateBody(createTaskSchema), asyncHandler(taskController.createTask));
 
 /**
  * @swagger
@@ -192,46 +138,9 @@ router.post(
  */
 router.patch(
   '/:id',
+  requireTaskOwnershipHandler,
   validateBody(updateTaskSchema),
-  asyncHandler(async (req: Request, res: Response) => {
-    const oldTask = await taskService.getTaskById(req.params['id'] as string);
-    if (!oldTask) {
-      return res.status(404).json({
-        success: false,
-        error: 'Task not found',
-      });
-    }
-
-    const ifMatch = req.headers['if-match'];
-    if (ifMatch) {
-      const currentEtag = `"${oldTask.id}-${oldTask.updatedAt.getTime()}"`;
-      if (ifMatch !== currentEtag) {
-        return res.status(412).json({
-          success: false,
-          error: 'Precondition Failed – resource was modified since last fetch',
-        });
-      }
-    }
-
-    const oldStatus = oldTask.status;
-    const task = await taskService.updateTask(req.params['id'] as string, req.body);
-
-    // Emit WebSocket events
-    emitTaskUpdated(io, task);
-
-    if (req.body.status && req.body.status !== oldStatus) {
-      emitTaskStatusChanged(io, task.id, oldStatus, req.body.status);
-
-      // Send email if status changed to DONE
-      if (req.body.status === TaskStatus.DONE) {
-        await emailService.sendTaskCompletionEmail(task);
-      }
-    }
-
-    const newEtag = `"${task.id}-${task.updatedAt.getTime()}"`;
-    res.setHeader('ETag', newEtag);
-    return res.status(204).send();
-  })
+  asyncHandler(taskController.updateTask)
 );
 
 /**
@@ -252,19 +161,6 @@ router.patch(
  *       200:
  *         description: Task deleted
  */
-router.delete(
-  '/:id',
-  asyncHandler(async (req: Request, res: Response) => {
-    await taskService.deleteTask(req.params['id'] as string);
-
-    // Emit WebSocket event
-    emitTaskDeleted(io, req.params['id'] as string);
-
-    res.status(200).json({
-      success: true,
-      message: 'Task deleted successfully',
-    });
-  })
-);
+router.delete('/:id', requireTaskOwnershipHandler, asyncHandler(taskController.deleteTask));
 
 export { router as taskRouter };

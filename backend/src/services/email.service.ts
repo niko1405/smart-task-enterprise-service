@@ -66,7 +66,7 @@ export class EmailService {
             <p>Task ID: ${task.id}</p>
             <div class="footer">
               <p>This is an automated notification from Smart Task Enterprise Service</p>
-              <p>View in Mailpit: <a href="http://localhost:8025">http://localhost:8025</a></p>
+              <p>Open the app: <a href="${env.APP_URL}">${env.APP_URL}</a></p>
             </div>
           </div>
         </div>

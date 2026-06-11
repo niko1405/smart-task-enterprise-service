@@ -12,6 +12,7 @@ import { PriorityBadge, StatusBadge } from '../components/tasks/badges';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { CommentSection } from '../components/comments/CommentSection';
 import { Button } from '../components/ui/Button';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { Modal } from '../components/ui/Modal';
 import { Spinner } from '../components/ui/Spinner';
 import { Alert } from '../components/ui/Alert';
@@ -63,6 +64,7 @@ export function TaskDetailPage(): JSX.Element {
   const { user } = useAuth();
   const { task, loading, error, deleted, reload } = useTask(id);
   const [editOpen, setEditOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -89,12 +91,14 @@ export function TaskDetailPage(): JSX.Element {
   }
 
   async function handleDelete(): Promise<void> {
-    if (!task || !window.confirm('Delete this task? This cannot be undone.')) return;
+    if (!task) return;
     try {
       await deleteTask(task.id);
       navigate('/');
     } catch {
       // keep user on page; error state shown by detail view if reload fails
+    } finally {
+      setConfirmDeleteOpen(false);
     }
   }
 
@@ -147,7 +151,7 @@ export function TaskDetailPage(): JSX.Element {
             <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)}>
               <Pencil className="h-4 w-4" /> Edit
             </Button>
-            <Button variant="danger" size="sm" onClick={handleDelete}>
+            <Button variant="danger" size="sm" onClick={() => setConfirmDeleteOpen(true)}>
               <Trash2 className="h-4 w-4" /> Delete
             </Button>
           </div>
@@ -162,6 +166,16 @@ export function TaskDetailPage(): JSX.Element {
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <CommentSection taskId={task.id} />
       </div>
+
+      <ConfirmModal
+        isOpen={confirmDeleteOpen}
+        title="Delete task"
+        message="Delete this task? This cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={() => void handleDelete()}
+        onCancel={() => setConfirmDeleteOpen(false)}
+        dangerous
+      />
 
       <Modal open={editOpen} title="Edit task" onClose={() => setEditOpen(false)}>
         <TaskForm

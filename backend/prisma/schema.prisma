@@ -43,8 +43,15 @@ model Task {
   
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
   comments  Comment[]
 
+  @@index([status])
+  @@index([priority])
+  @@index([createdById])
+  @@index([assignedToId])
+  @@index([status, priority])
+  @@index([deletedAt])
   @@map("tasks")
 }
 

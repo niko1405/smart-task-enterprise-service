@@ -49,9 +49,11 @@ export const errorHandler = (
     }
   }
 
-  // Log error in development
-  if (process.env.NODE_ENV === 'development') {
-    logger.error({ err }, 'Error occurred');
+  // Always log server errors; log client errors as warnings
+  if (statusCode >= 500) {
+    logger.error({ err }, 'Server error');
+  } else {
+    logger.warn({ err }, 'Client error');
   }
 
   res.status(statusCode).json({

@@ -1,12 +1,9 @@
-import { Router, Request, Response } from 'express';
-import { commentService } from '../services/comment.service';
+import { Router } from 'express';
 import { createCommentSchema, commentQuerySchema } from '../models/comment.model';
 import { validateBody, validateQuery } from '../middleware/validate';
 import { authenticate } from '../middleware/auth';
 import { asyncHandler } from '../utils/asyncHandler';
-import { io } from '../index';
-import { emitCommentAdded, emitCommentDeleted } from '../websocket/handlers';
-import { Role } from '@prisma/client';
+import * as commentController from '../controllers/comment.controller';
 
 const router = Router({ mergeParams: true });
 
@@ -42,15 +39,7 @@ router.use(authenticate);
  *       404:
  *         description: Task not found
  */
-router.get(
-  '/',
-  validateQuery(commentQuerySchema),
-  asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const taskId = req.params['id'] as string;
-    const result = await commentService.getComments(taskId, req.query as never);
-    res.status(200).json({ success: true, data: result });
-  })
-);
+router.get('/', validateQuery(commentQuerySchema), asyncHandler(commentController.listComments));
 
 /**
  * @swagger
@@ -88,20 +77,7 @@ router.get(
  *       404:
  *         description: Task not found
  */
-router.post(
-  '/',
-  validateBody(createCommentSchema),
-  asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const taskId = req.params['id'] as string;
-    const userId = req.user!.userId;
-
-    const comment = await commentService.createComment(taskId, userId, req.body as never);
-
-    emitCommentAdded(io, taskId, comment);
-
-    res.status(201).json({ success: true, data: comment });
-  })
-);
+router.post('/', validateBody(createCommentSchema), asyncHandler(commentController.createComment));
 
 /**
  * @swagger
@@ -132,20 +108,6 @@ router.post(
  *       404:
  *         description: Comment not found
  */
-router.delete(
-  '/:commentId',
-  asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const taskId = req.params['id'] as string;
-    const commentId = req.params['commentId'] as string;
-    const userId = req.user!.userId;
-    const userRole = req.user!.role as Role;
-
-    await commentService.deleteComment(commentId, userId, userRole);
-
-    emitCommentDeleted(io, taskId, commentId);
-
-    res.status(200).json({ success: true, message: 'Comment deleted successfully' });
-  })
-);
+router.delete('/:commentId', asyncHandler(commentController.deleteComment));
 
 export { router as commentRouter };

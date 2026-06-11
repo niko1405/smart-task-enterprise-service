@@ -36,7 +36,7 @@ export class TaskService {
   }
 
   private buildWhereClause(filters: TaskFilterInput): Prisma.TaskWhereInput {
-    const conditions: Prisma.TaskWhereInput[] = [];
+    const conditions: Prisma.TaskWhereInput[] = [{ deletedAt: null }];
 
     if (filters.status) conditions.push({ status: filters.status });
     if (filters.priority) conditions.push({ priority: filters.priority });
@@ -63,7 +63,7 @@ export class TaskService {
   }
 
   async getTasks(filters: TaskFilterInput): Promise<{
-    data: unknown[];
+    data: TaskWithAssociations[];
     pagination: { page: number; limit: number; total: number; totalPages: number };
   }> {
     const page = parseInt(filters.page, 10);
@@ -93,8 +93,8 @@ export class TaskService {
   }
 
   async getTaskById(taskId: string): Promise<TaskWithAssociations | null> {
-    return await prisma.task.findUnique({
-      where: { id: taskId },
+    return await prisma.task.findFirst({
+      where: { id: taskId, deletedAt: null },
       include: {
         createdBy: {
           select: { id: true, email: true, name: true },
@@ -136,17 +136,18 @@ export class TaskService {
   }
 
   async deleteTask(taskId: string): Promise<void> {
-    await prisma.task.delete({
+    await prisma.task.update({
       where: { id: taskId },
+      data: { deletedAt: new Date() },
     });
   }
 
   async getTaskStatus(taskId: string): Promise<TaskStatus | null> {
-    const task = await prisma.task.findUnique({
-      where: { id: taskId },
+    const task = await prisma.task.findFirst({
+      where: { id: taskId, deletedAt: null },
       select: { status: true },
     });
-    return task?.status || null;
+    return task?.status ?? null;
   }
 }
 

@@ -10,6 +10,7 @@ import { taskService } from '../src/services/task.service';
 describe('Task Endpoints', () => {
   let authToken: string;
   let userId: string;
+  let otherToken: string;
 
   beforeAll(async () => {
     // Connect to database
@@ -33,6 +34,19 @@ describe('Task Endpoints', () => {
     userId = user.id;
     authToken = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
+      env.JWT_SECRET
+    );
+
+    const otherUser = await prisma.user.create({
+      data: {
+        email: 'other@example.com',
+        password: await bcrypt.hash('password123', 12),
+        name: 'Other User',
+        role: Role.USER,
+      },
+    });
+    otherToken = jwt.sign(
+      { userId: otherUser.id, email: otherUser.email, role: otherUser.role },
       env.JWT_SECRET
     );
   });
@@ -343,6 +357,16 @@ describe('Task Endpoints', () => {
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
     });
+
+    it('should return 403 when non-owner tries to update task', async () => {
+      const response = await request(app)
+        .patch(`/api/v1/tasks/${taskId}`)
+        .set('Authorization', `Bearer ${otherToken}`)
+        .send({ title: 'Stolen Update' });
+
+      expect(response.status).toBe(403);
+      expect(response.body.success).toBe(false);
+    });
   });
 
   describe('DELETE /tasks/:id', () => {
@@ -382,6 +406,15 @@ describe('Task Endpoints', () => {
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+    });
+
+    it('should return 403 when non-owner tries to delete task', async () => {
+      const response = await request(app)
+        .delete(`/api/v1/tasks/${taskId}`)
+        .set('Authorization', `Bearer ${otherToken}`);
+
+      expect(response.status).toBe(403);
       expect(response.body.success).toBe(false);
     });
   });

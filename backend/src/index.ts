@@ -2,6 +2,7 @@ import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -12,6 +13,8 @@ import { seedDatabase } from './utils/seeder';
 import { errorHandler } from './middleware/errorHandler';
 import { setupSwagger } from './config/swagger';
 import { setupWebSocketHandlers } from './websocket/handlers';
+import { setIO } from './websocket/io';
+import { requestId } from './middleware/requestId';
 import { logger } from './utils/logger';
 import { logBanner } from './utils/banner';
 
@@ -24,12 +27,19 @@ const app: Application = express();
 const httpServer = createServer(app);
 
 // Setup Socket.IO
-export const io = new Server(httpServer, {
+const io = new Server(httpServer, {
   cors: {
     origin: env.CORS_ORIGIN,
     methods: ['GET', 'POST'],
   },
 });
+setIO(io);
+
+// Request ID (must be first for tracing)
+app.use(requestId);
+
+// Compression
+app.use(compression());
 
 // Security middleware
 app.use(helmet());
@@ -126,7 +136,7 @@ process.on('SIGINT', () => {
 });
 
 // Export for testing
-export { app, httpServer };
+export { app, httpServer, io };
 
 // Start server only if not in test mode
 if (process.env.NODE_ENV !== 'test') {

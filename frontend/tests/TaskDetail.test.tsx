@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { TaskDetailPage } from '../src/pages/TaskDetailPage';
@@ -76,9 +76,10 @@ describe('TaskDetailPage', () => {
 
   it('deletes the task after confirmation', async () => {
     mockedDelete.mockResolvedValue();
-    jest.spyOn(window, 'confirm').mockReturnValue(true);
     renderDetail();
     await userEvent.click(screen.getByRole('button', { name: /delete/i }));
+    const dialog = await screen.findByRole('dialog');
+    await userEvent.click(within(dialog).getByRole('button', { name: /delete/i }));
     await waitFor(() => expect(mockedDelete).toHaveBeenCalledWith('task-1'));
   });
 

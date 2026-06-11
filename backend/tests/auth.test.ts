@@ -89,6 +89,20 @@ describe('Auth Endpoints', () => {
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
+
+    it('should always assign USER role regardless of role field in body', async () => {
+      const response = await request(app)
+        .post('/api/v1/auth/register')
+        .send({
+          email: 'hacker@example.com',
+          password: 'password123',
+          name: 'Hacker',
+          role: 'ADMIN',
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.data.user.role).toBe('USER');
+    });
   });
 
   describe('POST /auth/login', () => {

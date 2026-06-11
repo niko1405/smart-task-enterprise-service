@@ -1,9 +1,9 @@
-import { Router, Request, Response } from 'express';
-import { authService } from '../services/auth.service';
+import { Router } from 'express';
 import { registerSchema, loginSchema } from '../models/user.model';
 import { validateBody } from '../middleware/validate';
 import { authenticate } from '../middleware/auth';
 import { asyncHandler } from '../utils/asyncHandler';
+import * as authController from '../controllers/auth.controller';
 
 const router = Router();
 
@@ -33,26 +33,13 @@ const router = Router();
  *               name:
  *                 type: string
  *                 minLength: 2
- *               role:
- *                 type: string
- *                 enum: [USER, ADMIN]
  *     responses:
  *       201:
  *         description: User registered successfully
  *       409:
  *         description: User already exists
  */
-router.post(
-  '/register',
-  validateBody(registerSchema),
-  asyncHandler(async (req: Request, res: Response) => {
-    const result = await authService.register(req.body);
-    res.status(201).json({
-      success: true,
-      data: result,
-    });
-  })
-);
+router.post('/register', validateBody(registerSchema), asyncHandler(authController.register));
 
 /**
  * @swagger
@@ -81,17 +68,7 @@ router.post(
  *       401:
  *         description: Invalid credentials
  */
-router.post(
-  '/login',
-  validateBody(loginSchema),
-  asyncHandler(async (req: Request, res: Response) => {
-    const result = await authService.login(req.body);
-    res.status(200).json({
-      success: true,
-      data: result,
-    });
-  })
-);
+router.post('/login', validateBody(loginSchema), asyncHandler(authController.login));
 
 /**
  * @swagger
@@ -107,22 +84,6 @@ router.post(
  *       401:
  *         description: Not authenticated
  */
-router.get(
-  '/me',
-  authenticate,
-  asyncHandler(async (req: Request, res: Response) => {
-    const user = await authService.getMe(req.user!.userId);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: 'User not found',
-      });
-    }
-    return res.status(200).json({
-      success: true,
-      data: user,
-    });
-  })
-);
+router.get('/me', authenticate, asyncHandler(authController.getMe));
 
 export { router as authRouter };
