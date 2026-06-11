@@ -36,7 +36,10 @@ export class CommentService {
     authorId: string,
     input: CreateCommentInput
   ): Promise<CommentWithAuthor> {
-    const task = await prisma.task.findFirst({ where: { id: taskId, deletedAt: null }, select: { id: true } });
+    const task = await prisma.task.findFirst({
+      where: { id: taskId, deletedAt: null },
+      select: { id: true },
+    });
     if (!task) {
       throw createError('Task not found', 404);
     }

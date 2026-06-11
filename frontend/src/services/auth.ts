@@ -18,18 +18,12 @@ export interface LoginInput {
 }
 
 export async function register(input: RegisterInput): Promise<AuthPayload> {
-  const res = await apiClient.post<SuccessEnvelope<AuthPayload>>(
-    '/auth/register',
-    input
-  );
+  const res = await apiClient.post<SuccessEnvelope<AuthPayload>>('/auth/register', input);
   return res.data.data;
 }
 
 export async function login(input: LoginInput): Promise<AuthPayload> {
-  const res = await apiClient.post<SuccessEnvelope<AuthPayload>>(
-    '/auth/login',
-    input
-  );
+  const res = await apiClient.post<SuccessEnvelope<AuthPayload>>('/auth/login', input);
   return res.data.data;
 }
 

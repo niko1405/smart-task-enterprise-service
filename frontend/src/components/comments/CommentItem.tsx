@@ -25,15 +25,9 @@ export function CommentItem({
       <div className="flex-1 rounded-lg bg-slate-50 px-3 py-2">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-slate-800">
-              {comment.author.name}
-            </span>
-            {isOwn && (
-              <Badge className="bg-indigo-100 text-indigo-700">You</Badge>
-            )}
-            <span className="text-xs text-slate-400">
-              {formatDateTime(comment.createdAt)}
-            </span>
+            <span className="text-sm font-medium text-slate-800">{comment.author.name}</span>
+            {isOwn && <Badge className="bg-indigo-100 text-indigo-700">You</Badge>}
+            <span className="text-xs text-slate-400">{formatDateTime(comment.createdAt)}</span>
           </div>
           {canDelete && (
             <button

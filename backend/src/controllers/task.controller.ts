@@ -62,7 +62,10 @@ export const updateTask = async (req: Request, res: Response): Promise<void> => 
   }
 
   const oldStatus = oldTask.status;
-  const task = await taskService.updateTask(req.params['id'] as string, sanitizeTaskInput(req.body));
+  const task = await taskService.updateTask(
+    req.params['id'] as string,
+    sanitizeTaskInput(req.body)
+  );
 
   emitTaskUpdated(getIO(), task);
 

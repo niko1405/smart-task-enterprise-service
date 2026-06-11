@@ -8,10 +8,7 @@ interface CommentComposerProps {
   onSubmit: (content: string) => Promise<void>;
 }
 
-export function CommentComposer({
-  posting,
-  onSubmit,
-}: CommentComposerProps): JSX.Element {
+export function CommentComposer({ posting, onSubmit }: CommentComposerProps): JSX.Element {
   const [value, setValue] = useState('');
 
   async function handleSubmit(e: FormEvent): Promise<void> {

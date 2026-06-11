@@ -105,16 +105,10 @@ export class AuthService {
     });
   }
 
-  private generateToken(
-    userId: string,
-    email: string,
-    role: Role
-  ): string {
-    return jwt.sign(
-      { userId, email, role },
-      env.JWT_SECRET as jwt.Secret,
-      { expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'] }
-    );
+  private generateToken(userId: string, email: string, role: Role): string {
+    return jwt.sign({ userId, email, role }, env.JWT_SECRET as jwt.Secret, {
+      expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'],
+    });
   }
 }
 

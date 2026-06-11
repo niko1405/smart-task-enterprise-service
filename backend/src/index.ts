@@ -142,4 +142,3 @@ export { app, httpServer, io };
 if (process.env.NODE_ENV !== 'test') {
   void startServer();
 }
-

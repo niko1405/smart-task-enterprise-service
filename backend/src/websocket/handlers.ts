@@ -94,12 +94,7 @@ export function emitCommentDeleted(io: Server, taskId: string, commentId: string
   io.to(`task:${taskId}`).emit('task:comment:deleted', { commentId });
 }
 
-export function emitToUser(
-  io: Server,
-  userId: string,
-  event: string,
-  data: unknown
-): void {
+export function emitToUser(io: Server, userId: string, event: string, data: unknown): void {
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
   io.to(`user:${userId}`).emit(event, data);
 }

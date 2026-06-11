@@ -3,10 +3,7 @@ import type { Task, User, UserSummary } from '../types';
 // Builds a de-duplicated list of users referenced by the loaded tasks plus the
 // current user, used to populate the assignee dropdown (the API exposes no
 // dedicated "list users" endpoint).
-export function collectUsers(
-  tasks: Task[],
-  current: User | null
-): UserSummary[] {
+export function collectUsers(tasks: Task[], current: User | null): UserSummary[] {
   const map = new Map<string, UserSummary>();
   if (current) {
     map.set(current.id, {

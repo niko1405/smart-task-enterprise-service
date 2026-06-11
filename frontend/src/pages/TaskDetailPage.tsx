@@ -57,7 +57,9 @@ function useTaskActions(
     } catch (err) {
       if (err instanceof ApiError && err.status === 412) {
         await reload();
-        setFormError('This task was changed elsewhere. We reloaded it — please review and try again.');
+        setFormError(
+          'This task was changed elsewhere. We reloaded it — please review and try again.'
+        );
       } else {
         setFormError(toErrorMessage(err, 'Could not update task.'));
       }
@@ -80,10 +82,16 @@ function useTaskActions(
   }
 
   return {
-    editOpen, setEditOpen,
-    confirmDeleteOpen, setConfirmDeleteOpen,
-    submitting, formError, deleteError,
-    canModify, handleUpdate, handleDelete,
+    editOpen,
+    setEditOpen,
+    confirmDeleteOpen,
+    setConfirmDeleteOpen,
+    submitting,
+    formError,
+    deleteError,
+    canModify,
+    handleUpdate,
+    handleDelete,
   };
 }
 
@@ -116,7 +124,10 @@ function TaskMeta({ task }: { task: Task }): JSX.Element {
         <MetaRow label="Tags">
           <span className="flex flex-wrap gap-1.5">
             {task.tags.map((tag) => (
-              <span key={tag} className="rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+              <span
+                key={tag}
+                className="rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-600"
+              >
                 #{tag}
               </span>
             ))}
@@ -133,10 +144,16 @@ export function TaskDetailPage(): JSX.Element {
   const { task, loading, error, deleted, reload } = useTask(id);
   const users = useMemo(() => collectUsers(task ? [task] : [], user), [task, user]);
   const {
-    editOpen, setEditOpen,
-    confirmDeleteOpen, setConfirmDeleteOpen,
-    submitting, formError, deleteError,
-    canModify, handleUpdate, handleDelete,
+    editOpen,
+    setEditOpen,
+    confirmDeleteOpen,
+    setConfirmDeleteOpen,
+    submitting,
+    formError,
+    deleteError,
+    canModify,
+    handleUpdate,
+    handleDelete,
   } = useTaskActions(task, user?.id, user?.role, reload);
 
   if (loading) {
@@ -171,7 +188,10 @@ export function TaskDetailPage(): JSX.Element {
 
   return (
     <div className="space-y-5">
-      <Link to="/" className="inline-flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-indigo-600">
+      <Link
+        to="/"
+        className="inline-flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-indigo-600"
+      >
         <ArrowLeft className="h-4 w-4" /> Back to tasks
       </Link>
 

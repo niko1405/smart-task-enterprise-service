@@ -11,12 +11,7 @@ export function Pager({ pagination, onPage }: PagerProps): JSX.Element {
   const { page, totalPages } = pagination;
   return (
     <div className="flex items-center justify-center gap-4">
-      <Button
-        variant="secondary"
-        size="sm"
-        disabled={page <= 1}
-        onClick={() => onPage(page - 1)}
-      >
+      <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => onPage(page - 1)}>
         <ChevronLeft className="h-4 w-4" /> Prev
       </Button>
       <span className="text-sm text-slate-600">

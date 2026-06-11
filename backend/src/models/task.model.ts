@@ -29,7 +29,10 @@ export const taskFilterSchema = z.object({
     .string()
     .default('10')
     .refine(
-      (s) => { const n = parseInt(s, 10); return !isNaN(n) && n >= 1 && n <= 100; },
+      (s) => {
+        const n = parseInt(s, 10);
+        return !isNaN(n) && n >= 1 && n <= 100;
+      },
       { message: 'Limit must be between 1 and 100' }
     ),
   sortBy: z.enum(['createdAt', 'updatedAt', 'dueDate', 'priority', 'status']).default('createdAt'),
@@ -46,16 +49,21 @@ export const taskResponseSchema = z.object({
   tags: z.array(z.string()),
   createdById: z.string(),
   assignedToId: z.string().nullable(),
-  createdBy: z.object({
-    id: z.string(),
-    email: z.string(),
-    name: z.string(),
-  }).optional(),
-  assignedTo: z.object({
-    id: z.string(),
-    email: z.string(),
-    name: z.string(),
-  }).nullable().optional(),
+  createdBy: z
+    .object({
+      id: z.string(),
+      email: z.string(),
+      name: z.string(),
+    })
+    .optional(),
+  assignedTo: z
+    .object({
+      id: z.string(),
+      email: z.string(),
+      name: z.string(),
+    })
+    .nullable()
+    .optional(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });

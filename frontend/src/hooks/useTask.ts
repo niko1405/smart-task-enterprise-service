@@ -2,12 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { getTask } from '../api/tasks';
 import { toErrorMessage } from '../lib/errors';
 import { useSocket } from './useSocket';
-import type {
-  StatusChangedPayload,
-  Task,
-  TaskDeletedPayload,
-  TaskEventPayload,
-} from '../types';
+import type { StatusChangedPayload, Task, TaskDeletedPayload, TaskEventPayload } from '../types';
 
 interface UseTaskResult {
   task: Task | null;

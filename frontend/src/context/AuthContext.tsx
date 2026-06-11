@@ -1,16 +1,6 @@
-import {
-  createContext,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import * as authApi from '../api/auth';
-import {
-  getStoredToken,
-  setUnauthorizedHandler,
-} from '../lib/apiClient';
+import { getStoredToken, setUnauthorizedHandler } from '../lib/apiClient';
 import { TOKEN_STORAGE_KEY } from '../lib/config';
 import type { User } from '../types';
 
@@ -23,9 +13,7 @@ export interface AuthContextValue {
   logout: () => void;
 }
 
-export const AuthContext = createContext<AuthContextValue | undefined>(
-  undefined
-);
+export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 function persistToken(token: string | null): void {
   if (token) {

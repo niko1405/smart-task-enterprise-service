@@ -34,9 +34,7 @@ export function TaskFilters({ filters, onChange }: TaskFiltersProps): JSX.Elemen
       <Select
         aria-label="Filter by priority"
         value={filters.priority ?? ''}
-        onChange={(e) =>
-          onChange({ priority: e.target.value as Filters['priority'] })
-        }
+        onChange={(e) => onChange({ priority: e.target.value as Filters['priority'] })}
       >
         <option value="">All priorities</option>
         <option value="LOW">Low</option>

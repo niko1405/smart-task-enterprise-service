@@ -47,9 +47,7 @@ export const ConfirmModal = React.memo(function ConfirmModal({
             type="button"
             onClick={onConfirm}
             className={`px-4 py-2 text-sm font-medium text-white rounded-md transition-colors ${
-              dangerous
-                ? 'bg-red-600 hover:bg-red-700'
-                : 'bg-blue-600 hover:bg-blue-700'
+              dangerous ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'
             }`}
           >
             {confirmLabel}

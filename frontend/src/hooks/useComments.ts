@@ -1,18 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { Socket } from 'socket.io-client';
-import {
-  createComment,
-  deleteComment as deleteCommentApi,
-  listComments,
-} from '../api/comments';
+import { createComment, deleteComment as deleteCommentApi, listComments } from '../api/comments';
 import { toErrorMessage } from '../lib/errors';
 import { useSocket } from './useSocket';
-import type {
-  Comment,
-  CommentAddedPayload,
-  CommentDeletedPayload,
-} from '../types';
+import type { Comment, CommentAddedPayload, CommentDeletedPayload } from '../types';
 
 const PAGE_SIZE = 20;
 

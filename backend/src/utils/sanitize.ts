@@ -4,7 +4,9 @@ export function sanitizeString(value: string): string {
   return value.replace(HTML_PATTERN, '').trim();
 }
 
-export function sanitizeOptionalString(value: string | null | undefined): string | null | undefined {
+export function sanitizeOptionalString(
+  value: string | null | undefined
+): string | null | undefined {
   if (value == null) return value;
   return sanitizeString(value);
 }

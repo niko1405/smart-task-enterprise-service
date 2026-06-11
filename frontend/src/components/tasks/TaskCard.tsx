@@ -30,10 +30,7 @@ export function TaskCard({ task, onStatusChange }: TaskCardProps): JSX.Element {
       {task.tags.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {task.tags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-600"
-            >
+            <span key={tag} className="rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
               #{tag}
             </span>
           ))}

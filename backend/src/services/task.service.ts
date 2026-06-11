@@ -44,7 +44,10 @@ export class TaskService {
     if (filters.createdById) conditions.push({ createdById: filters.createdById });
 
     if (filters.tags) {
-      const tagList = filters.tags.split(',').map((t) => t.trim()).filter(Boolean);
+      const tagList = filters.tags
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
       if (tagList.length > 0) {
         conditions.push({ tags: { hasSome: tagList } });
       }

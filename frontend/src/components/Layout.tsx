@@ -15,9 +15,7 @@ function UserChip(): JSX.Element | null {
       <div className="hidden sm:block">
         <div className="flex items-center gap-2">
           <p className="text-sm font-medium text-slate-800">{user.name}</p>
-          {user.role === 'ADMIN' && (
-            <Badge className="bg-purple-100 text-purple-700">Admin</Badge>
-          )}
+          {user.role === 'ADMIN' && <Badge className="bg-purple-100 text-purple-700">Admin</Badge>}
         </div>
         <p className="text-xs text-slate-500">{user.email}</p>
       </div>
@@ -43,9 +41,7 @@ export function Layout(): JSX.Element {
               <CheckSquare className="h-5 w-5" />
             </span>
             <div>
-              <h1 className="text-base font-bold leading-tight text-slate-900">
-                Smart Task
-              </h1>
+              <h1 className="text-base font-bold leading-tight text-slate-900">Smart Task</h1>
               <p className="text-xs text-slate-500">Enterprise Service</p>
             </div>
           </div>

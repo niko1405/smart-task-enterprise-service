@@ -8,7 +8,8 @@ const options: swaggerJsdoc.Options = {
     info: {
       title: 'Smart Task Enterprise Service API',
       version: '1.0.0',
-      description: 'Backend API for Smart Task Enterprise Service with authentication, task management, and real-time features',
+      description:
+        'Backend API for Smart Task Enterprise Service with authentication, task management, and real-time features',
       contact: {
         name: 'API Support',
         email: 'support@smarttask.local',

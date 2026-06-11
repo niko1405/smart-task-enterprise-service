@@ -67,12 +67,12 @@ export async function seedDatabase(): Promise<void> {
         continue;
       }
 
-      const assignedToId = taskData.assignedToEmail
-        ? userMap.get(taskData.assignedToEmail)
-        : null;
+      const assignedToId = taskData.assignedToEmail ? userMap.get(taskData.assignedToEmail) : null;
 
       if (taskData.assignedToEmail && !assignedToId) {
-        logger.warn(`   Warning: Assignee ${taskData.assignedToEmail} not found, task will be unassigned`);
+        logger.warn(
+          `   Warning: Assignee ${taskData.assignedToEmail} not found, task will be unassigned`
+        );
       }
 
       const task = await prisma.task.create({

@@ -17,16 +17,12 @@ import type { CreateTaskInput, Task, TaskStatus } from '../types';
 
 export function DashboardPage(): JSX.Element {
   const { user } = useAuth();
-  const { tasks, pagination, loading, error, filters, setFilters, refetch } =
-    useTasks();
+  const { tasks, pagination, loading, error, filters, setFilters, refetch } = useTasks();
   const [createOpen, setCreateOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const users = useMemo(
-    () => collectUsers(tasks, user),
-    [tasks, user]
-  );
+  const users = useMemo(() => collectUsers(tasks, user), [tasks, user]);
 
   async function handleCreate(input: CreateTaskInput): Promise<void> {
     setSubmitting(true);
@@ -41,10 +37,7 @@ export function DashboardPage(): JSX.Element {
     }
   }
 
-  async function handleStatusChange(
-    task: Task,
-    status: TaskStatus
-  ): Promise<void> {
+  async function handleStatusChange(task: Task, status: TaskStatus): Promise<void> {
     if (task.status === status) return;
     try {
       await updateTask(task.id, { status }, computeETag(task));
@@ -82,27 +75,16 @@ export function DashboardPage(): JSX.Element {
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {tasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onStatusChange={handleStatusChange}
-            />
+            <TaskCard key={task.id} task={task} onStatusChange={handleStatusChange} />
           ))}
         </div>
       )}
 
       {pagination && pagination.totalPages > 1 && (
-        <Pager
-          pagination={pagination}
-          onPage={(page) => setFilters({ page })}
-        />
+        <Pager pagination={pagination} onPage={(page) => setFilters({ page })} />
       )}
 
-      <Modal
-        open={createOpen}
-        title="Create task"
-        onClose={() => setCreateOpen(false)}
-      >
+      <Modal open={createOpen} title="Create task" onClose={() => setCreateOpen(false)}>
         <TaskForm
           users={users}
           submitting={submitting}

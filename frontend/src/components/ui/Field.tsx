@@ -10,10 +10,7 @@ interface FieldProps {
 export function Field({ label, htmlFor, error, children }: FieldProps): JSX.Element {
   return (
     <div className="space-y-1">
-      <label
-        htmlFor={htmlFor}
-        className="block text-sm font-medium text-slate-700"
-      >
+      <label htmlFor={htmlFor} className="block text-sm font-medium text-slate-700">
         {label}
       </label>
       {children}

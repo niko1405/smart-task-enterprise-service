@@ -83,10 +83,20 @@ export function TaskForm({
     <form onSubmit={submit} className="space-y-4" noValidate>
       {error && <Alert message={error} />}
       <Field label="Title" htmlFor="title" error={errors.title?.message}>
-        <Input id="title" placeholder="Task title" invalid={!!errors.title} {...register('title')} />
+        <Input
+          id="title"
+          placeholder="Task title"
+          invalid={!!errors.title}
+          {...register('title')}
+        />
       </Field>
       <Field label="Description" htmlFor="description" error={errors.description?.message}>
-        <Textarea id="description" rows={3} placeholder="Optional details" {...register('description')} />
+        <Textarea
+          id="description"
+          rows={3}
+          placeholder="Optional details"
+          {...register('description')}
+        />
       </Field>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Status" htmlFor="status">
