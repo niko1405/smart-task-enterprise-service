@@ -57,7 +57,7 @@ export function useTask(taskId: string): UseTaskResult {
     socket.on('task:updated', onUpdated);
     socket.on('task:statusChanged', onStatus);
     socket.on('task:deleted', onDeleted);
-    return () => {
+    return (): void => {
       socket.off('task:updated', onUpdated);
       socket.off('task:statusChanged', onStatus);
       socket.off('task:deleted', onDeleted);

@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { MutableRefObject, Dispatch, SetStateAction } from 'react';
+import type { Socket } from 'socket.io-client';
 import { listTasks } from '../api/tasks';
 import { toErrorMessage } from '../lib/errors';
 import { useSocket } from './useSocket';
@@ -12,6 +14,50 @@ import type {
 } from '../types';
 
 const DEFAULT_LIMIT = 10;
+
+function bindTaskSocketHandlers(
+  socket: Socket,
+  filtersRef: MutableRefObject<TaskFilters>,
+  setTasks: Dispatch<SetStateAction<Task[]>>
+): () => void {
+  const onPage1 = (): boolean => (filtersRef.current.page ?? 1) === 1;
+
+  const onCreated = ({ task }: TaskEventPayload): void => {
+    if (!onPage1() || !matchesFilters(task, filtersRef.current)) return;
+    setTasks((prev) => (prev.some((t) => t.id === task.id) ? prev : [task, ...prev]));
+  };
+
+  const onUpdated = ({ task }: TaskEventPayload): void => {
+    setTasks((prev) => {
+      const exists = prev.some((t) => t.id === task.id);
+      if (matchesFilters(task, filtersRef.current)) {
+        if (exists) return prev.map((t) => (t.id === task.id ? task : t));
+        return onPage1() ? [task, ...prev] : prev;
+      }
+      return prev.filter((t) => t.id !== task.id);
+    });
+  };
+
+  const onStatusChanged = (p: StatusChangedPayload): void => {
+    setTasks((prev) => prev.map((t) => (t.id === p.taskId ? { ...t, status: p.newStatus } : t)));
+  };
+
+  const onDeleted = ({ taskId }: TaskDeletedPayload): void => {
+    setTasks((prev) => prev.filter((t) => t.id !== taskId));
+  };
+
+  socket.on('task:created', onCreated);
+  socket.on('task:updated', onUpdated);
+  socket.on('task:statusChanged', onStatusChanged);
+  socket.on('task:deleted', onDeleted);
+
+  return (): void => {
+    socket.off('task:created', onCreated);
+    socket.off('task:updated', onUpdated);
+    socket.off('task:statusChanged', onStatusChanged);
+    socket.off('task:deleted', onDeleted);
+  };
+}
 
 export function matchesFilters(task: Task, filters: TaskFilters): boolean {
   if (filters.status && task.status !== filters.status) return false;
@@ -77,48 +123,7 @@ export function useTasks(): UseTasksResult {
 
   useEffect(() => {
     if (!socket) return;
-    const onPage1 = (): boolean => (filtersRef.current.page ?? 1) === 1;
-
-    const onCreated = ({ task }: TaskEventPayload): void => {
-      if (!onPage1() || !matchesFilters(task, filtersRef.current)) return;
-      setTasks((prev) =>
-        prev.some((t) => t.id === task.id) ? prev : [task, ...prev]
-      );
-    };
-
-    const onUpdated = ({ task }: TaskEventPayload): void => {
-      setTasks((prev) => {
-        const exists = prev.some((t) => t.id === task.id);
-        if (matchesFilters(task, filtersRef.current)) {
-          if (exists) return prev.map((t) => (t.id === task.id ? task : t));
-          return onPage1() ? [task, ...prev] : prev;
-        }
-        return prev.filter((t) => t.id !== task.id);
-      });
-    };
-
-    const onStatusChanged = (p: StatusChangedPayload): void => {
-      setTasks((prev) =>
-        prev.map((t) =>
-          t.id === p.taskId ? { ...t, status: p.newStatus } : t
-        )
-      );
-    };
-
-    const onDeleted = ({ taskId }: TaskDeletedPayload): void => {
-      setTasks((prev) => prev.filter((t) => t.id !== taskId));
-    };
-
-    socket.on('task:created', onCreated);
-    socket.on('task:updated', onUpdated);
-    socket.on('task:statusChanged', onStatusChanged);
-    socket.on('task:deleted', onDeleted);
-    return () => {
-      socket.off('task:created', onCreated);
-      socket.off('task:updated', onUpdated);
-      socket.off('task:statusChanged', onStatusChanged);
-      socket.off('task:deleted', onDeleted);
-    };
+    return bindTaskSocketHandlers(socket, filtersRef, setTasks);
   }, [socket]);
 
   return {

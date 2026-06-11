@@ -22,10 +22,16 @@ export const taskFilterSchema = z.object({
   priority: taskPrioritySchema.optional(),
   assignedToId: z.string().uuid().optional(),
   createdById: z.string().uuid().optional(),
-  tags: z.string().optional(), // comma-separated
-  search: z.string().optional(),
+  tags: z.string().max(500, 'Tags filter too long').optional(), // comma-separated
+  search: z.string().max(200, 'Search query too long').optional(),
   page: z.string().default('1'),
-  limit: z.string().default('10'),
+  limit: z
+    .string()
+    .default('10')
+    .refine(
+      (s) => { const n = parseInt(s, 10); return !isNaN(n) && n >= 1 && n <= 100; },
+      { message: 'Limit must be between 1 and 100' }
+    ),
   sortBy: z.enum(['createdAt', 'updatedAt', 'dueDate', 'priority', 'status']).default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });

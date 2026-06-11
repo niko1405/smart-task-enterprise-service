@@ -4,9 +4,12 @@ import { Role } from '@prisma/client';
 export const userRoleSchema = z.enum([Role.USER, Role.ADMIN]);
 
 export const registerSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Invalid email address').max(255, 'Email must be less than 255 characters'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(128, 'Password must be less than 128 characters'),
+  name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name must be less than 100 characters'),
 });
 
 export const loginSchema = z.object({

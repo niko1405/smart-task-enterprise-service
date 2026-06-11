@@ -27,7 +27,7 @@ export function SocketProvider({
     }
     const instance = createSocket(token);
     setSocket(instance);
-    return () => {
+    return (): void => {
       instance.disconnect();
     };
   }, [token]);

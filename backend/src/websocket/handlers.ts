@@ -3,6 +3,8 @@ import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { logger } from '../utils/logger';
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 interface AuthenticatedSocket extends Socket {
   userId?: string;
   userRole?: string;
@@ -40,14 +42,16 @@ export function setupWebSocketHandlers(io: Server): void {
     }
 
     // Task room: join when client opens task detail view
-    socket.on('task:join', (taskId: string) => {
+    socket.on('task:join', (taskId: unknown) => {
+      if (typeof taskId !== 'string' || !UUID_PATTERN.test(taskId)) return;
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       void socket.join(`task:${taskId}`);
       logger.debug(`🚪 Socket ${socket.id} joined task room: ${taskId}`);
     });
 
     // Task room: leave when client closes task detail view
-    socket.on('task:leave', (taskId: string) => {
+    socket.on('task:leave', (taskId: unknown) => {
+      if (typeof taskId !== 'string' || !UUID_PATTERN.test(taskId)) return;
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       void socket.leave(`task:${taskId}`);
       logger.debug(`🚪 Socket ${socket.id} left task room: ${taskId}`);

@@ -8,7 +8,13 @@ export const createCommentSchema = z.object({
 });
 
 export const commentQuerySchema = z.object({
-  limit: z.string().default('20'),
+  limit: z
+    .string()
+    .default('20')
+    .refine(
+      (s) => { const n = parseInt(s, 10); return !isNaN(n) && n >= 1 && n <= 100; },
+      { message: 'Limit must be between 1 and 100' }
+    ),
   cursor: z.string().uuid().optional(),
 });
 

@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import type { Socket } from 'socket.io-client';
 import {
   createComment,
   deleteComment as deleteCommentApi,
@@ -13,6 +15,66 @@ import type {
 } from '../types';
 
 const PAGE_SIZE = 20;
+
+async function performAddComment(
+  taskId: string,
+  content: string,
+  setPosting: Dispatch<SetStateAction<boolean>>,
+  setError: Dispatch<SetStateAction<string | null>>,
+  setComments: Dispatch<SetStateAction<Comment[]>>
+): Promise<void> {
+  setPosting(true);
+  setError(null);
+  try {
+    const created = await createComment(taskId, content);
+    setComments((prev) => (prev.some((c) => c.id === created.id) ? prev : [...prev, created]));
+  } catch (err) {
+    setError(toErrorMessage(err, 'Failed to post comment.'));
+    throw err;
+  } finally {
+    setPosting(false);
+  }
+}
+
+async function performRemoveComment(
+  taskId: string,
+  commentId: string,
+  setError: Dispatch<SetStateAction<string | null>>,
+  setComments: Dispatch<SetStateAction<Comment[]>>
+): Promise<void> {
+  try {
+    await deleteCommentApi(taskId, commentId);
+    setComments((prev) => prev.filter((c) => c.id !== commentId));
+  } catch (err) {
+    setError(toErrorMessage(err, 'Failed to delete comment.'));
+    throw err;
+  }
+}
+
+function bindCommentSocketHandlers(
+  socket: Socket,
+  taskId: string,
+  setComments: Dispatch<SetStateAction<Comment[]>>
+): () => void {
+  socket.emit('task:join', taskId);
+
+  const onAdded = ({ comment }: CommentAddedPayload): void => {
+    if (comment.taskId !== taskId) return;
+    setComments((prev) => (prev.some((c) => c.id === comment.id) ? prev : [...prev, comment]));
+  };
+  const onDeleted = ({ commentId }: CommentDeletedPayload): void => {
+    setComments((prev) => prev.filter((c) => c.id !== commentId));
+  };
+
+  socket.on('task:comment:added', onAdded);
+  socket.on('task:comment:deleted', onDeleted);
+
+  return (): void => {
+    socket.emit('task:leave', taskId);
+    socket.off('task:comment:added', onAdded);
+    socket.off('task:comment:deleted', onDeleted);
+  };
+}
 
 interface UseCommentsResult {
   comments: Comment[];
@@ -65,7 +127,7 @@ export function useComments(taskId: string): UseCommentsResult {
       .finally(() => {
         if (active) setLoading(false);
       });
-    return () => {
+    return (): void => {
       active = false;
     };
   }, [fetchPage]);
@@ -79,58 +141,20 @@ export function useComments(taskId: string): UseCommentsResult {
   }, [fetchPage]);
 
   const addComment = useCallback(
-    async (content: string): Promise<void> => {
-      setPosting(true);
-      setError(null);
-      try {
-        const created = await createComment(taskId, content);
-        setComments((prev) =>
-          prev.some((c) => c.id === created.id) ? prev : [...prev, created]
-        );
-      } catch (err) {
-        setError(toErrorMessage(err, 'Failed to post comment.'));
-        throw err;
-      } finally {
-        setPosting(false);
-      }
-    },
+    (content: string): Promise<void> =>
+      performAddComment(taskId, content, setPosting, setError, setComments),
     [taskId]
   );
 
   const removeComment = useCallback(
-    async (commentId: string): Promise<void> => {
-      try {
-        await deleteCommentApi(taskId, commentId);
-        setComments((prev) => prev.filter((c) => c.id !== commentId));
-      } catch (err) {
-        setError(toErrorMessage(err, 'Failed to delete comment.'));
-        throw err;
-      }
-    },
+    (commentId: string): Promise<void> =>
+      performRemoveComment(taskId, commentId, setError, setComments),
     [taskId]
   );
 
   useEffect(() => {
     if (!socket) return;
-    socket.emit('task:join', taskId);
-
-    const onAdded = ({ comment }: CommentAddedPayload): void => {
-      if (comment.taskId !== taskId) return;
-      setComments((prev) =>
-        prev.some((c) => c.id === comment.id) ? prev : [...prev, comment]
-      );
-    };
-    const onDeleted = ({ commentId }: CommentDeletedPayload): void => {
-      setComments((prev) => prev.filter((c) => c.id !== commentId));
-    };
-
-    socket.on('task:comment:added', onAdded);
-    socket.on('task:comment:deleted', onDeleted);
-    return () => {
-      socket.emit('task:leave', taskId);
-      socket.off('task:comment:added', onAdded);
-      socket.off('task:comment:deleted', onDeleted);
-    };
+    return bindCommentSocketHandlers(socket, taskId, setComments);
   }, [socket, taskId]);
 
   return {

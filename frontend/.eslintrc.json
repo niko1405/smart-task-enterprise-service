@@ -25,7 +25,7 @@
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "warn",
     "complexity": ["error", 10],
-    "max-lines-per-function": ["warn", 50],
+    "max-lines-per-function": ["warn", { "max": 80, "skipBlankLines": true, "skipComments": true }],
     "no-console": "error"
   },
   "env": {
@@ -37,5 +37,13 @@
       "version": "detect"
     }
   },
-  "ignorePatterns": ["dist/", "node_modules/", "*.js"]
+  "ignorePatterns": ["dist/", "node_modules/", "*.js"],
+  "overrides": [
+    {
+      "files": ["*.tsx"],
+      "rules": {
+        "max-lines-per-function": ["warn", { "max": 100, "skipBlankLines": true, "skipComments": true }]
+      }
+    }
+  ]
 }

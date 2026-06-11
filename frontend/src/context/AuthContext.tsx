@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
       .finally(() => {
         if (active) setLoading(false);
       });
-    return () => {
+    return (): void => {
       active = false;
     };
   }, [token, logout]);

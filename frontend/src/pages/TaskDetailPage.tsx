@@ -18,6 +18,75 @@ import { Spinner } from '../components/ui/Spinner';
 import { Alert } from '../components/ui/Alert';
 import type { CreateTaskInput, Task } from '../types';
 
+interface UseTaskActionsResult {
+  editOpen: boolean;
+  setEditOpen: (open: boolean) => void;
+  confirmDeleteOpen: boolean;
+  setConfirmDeleteOpen: (open: boolean) => void;
+  submitting: boolean;
+  formError: string | null;
+  deleteError: string | null;
+  canModify: boolean;
+  handleUpdate: (input: CreateTaskInput) => Promise<void>;
+  handleDelete: () => Promise<void>;
+}
+
+function useTaskActions(
+  task: Task | null,
+  userId: string | undefined,
+  userRole: string | undefined,
+  reload: () => Promise<void>
+): UseTaskActionsResult {
+  const navigate = useNavigate();
+  const [editOpen, setEditOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const canModify = task !== null && (userId === task.createdBy.id || userRole === 'ADMIN');
+
+  async function handleUpdate(input: CreateTaskInput): Promise<void> {
+    if (!task) return;
+    setSubmitting(true);
+    setFormError(null);
+    try {
+      await updateTask(task.id, input, computeETag(task));
+      setEditOpen(false);
+      await reload();
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 412) {
+        await reload();
+        setFormError('This task was changed elsewhere. We reloaded it — please review and try again.');
+      } else {
+        setFormError(toErrorMessage(err, 'Could not update task.'));
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleDelete(): Promise<void> {
+    if (!task) return;
+    setDeleteError(null);
+    try {
+      await deleteTask(task.id);
+      navigate('/');
+    } catch (err) {
+      setDeleteError(toErrorMessage(err, 'Could not delete task. You may not have permission.'));
+    } finally {
+      setConfirmDeleteOpen(false);
+    }
+  }
+
+  return {
+    editOpen, setEditOpen,
+    confirmDeleteOpen, setConfirmDeleteOpen,
+    submitting, formError, deleteError,
+    canModify, handleUpdate, handleDelete,
+  };
+}
+
 function MetaRow({ label, children }: { label: string; children: ReactNode }): JSX.Element {
   return (
     <div className="flex items-center gap-2 text-sm">
@@ -60,47 +129,15 @@ function TaskMeta({ task }: { task: Task }): JSX.Element {
 
 export function TaskDetailPage(): JSX.Element {
   const { id = '' } = useParams();
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { task, loading, error, deleted, reload } = useTask(id);
-  const [editOpen, setEditOpen] = useState(false);
-  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-
   const users = useMemo(() => collectUsers(task ? [task] : [], user), [task, user]);
-
-  async function handleUpdate(input: CreateTaskInput): Promise<void> {
-    if (!task) return;
-    setSubmitting(true);
-    setFormError(null);
-    try {
-      await updateTask(task.id, input, computeETag(task));
-      setEditOpen(false);
-      await reload();
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 412) {
-        await reload();
-        setFormError('This task was changed elsewhere. We reloaded it — please review and try again.');
-      } else {
-        setFormError(toErrorMessage(err, 'Could not update task.'));
-      }
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  async function handleDelete(): Promise<void> {
-    if (!task) return;
-    try {
-      await deleteTask(task.id);
-      navigate('/');
-    } catch {
-      // keep user on page; error state shown by detail view if reload fails
-    } finally {
-      setConfirmDeleteOpen(false);
-    }
-  }
+  const {
+    editOpen, setEditOpen,
+    confirmDeleteOpen, setConfirmDeleteOpen,
+    submitting, formError, deleteError,
+    canModify, handleUpdate, handleDelete,
+  } = useTaskActions(task, user?.id, user?.role, reload);
 
   if (loading) {
     return (
@@ -147,19 +184,23 @@ export function TaskDetailPage(): JSX.Element {
               <PriorityBadge priority={task.priority} />
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)}>
-              <Pencil className="h-4 w-4" /> Edit
-            </Button>
-            <Button variant="danger" size="sm" onClick={() => setConfirmDeleteOpen(true)}>
-              <Trash2 className="h-4 w-4" /> Delete
-            </Button>
-          </div>
+          {canModify && (
+            <div className="flex gap-2">
+              <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)}>
+                <Pencil className="h-4 w-4" /> Edit
+              </Button>
+              <Button variant="danger" size="sm" onClick={() => setConfirmDeleteOpen(true)}>
+                <Trash2 className="h-4 w-4" /> Delete
+              </Button>
+            </div>
+          )}
         </div>
         {task.description && (
           <p className="whitespace-pre-wrap text-sm text-slate-600">{task.description}</p>
         )}
       </div>
+
+      {deleteError && <Alert message={deleteError} />}
 
       <TaskMeta task={task} />
 
